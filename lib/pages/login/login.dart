@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../home/home.dart'; //홈으로
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -93,7 +94,11 @@ class LoginPage extends StatelessWidget {
                   height: 55,
                   child: ElevatedButton(
                     onPressed: () {
-                      print("로그인 시도");
+                      Navigator.push(
+                        //홈으로 예비
+                        context,
+                        MaterialPageRoute(builder: (context) => HomePage()),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF54D2A7),
