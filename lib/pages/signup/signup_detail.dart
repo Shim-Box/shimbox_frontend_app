@@ -8,15 +8,8 @@ class ExperienceDetailPage extends StatefulWidget {
 }
 
 class _ExperienceDetailPageState extends State<ExperienceDetailPage> {
-  int? _selectedDays;
   int? _selectedHours;
-  final _areaController = TextEditingController();
-
-  @override
-  void dispose() {
-    _areaController.dispose();
-    super.dispose();
-  }
+  int? _selectedDeliveries;
 
   Widget buildOption({
     required String text,
@@ -46,7 +39,10 @@ class _ExperienceDetailPageState extends State<ExperienceDetailPage> {
               height: 20,
             ),
             const SizedBox(width: 12),
-            Text(text, style: const TextStyle(fontSize: 15)),
+            Text(
+              text,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),
@@ -104,25 +100,8 @@ class _ExperienceDetailPageState extends State<ExperienceDetailPage> {
               const Divider(thickness: 1, color: Color(0xFFE0E0E0), height: 32),
 
               const Text(
-                'Q1. 주 몇 일 정도 근무하셨나요?',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              buildOption(
-                text: '주 4일~5일',
-                selected: _selectedDays == 0,
-                onTap: () => setState(() => _selectedDays = 0),
-              ),
-              buildOption(
-                text: '주 5일 이상',
-                selected: _selectedDays == 1,
-                onTap: () => setState(() => _selectedDays = 1),
-              ),
-
-              const SizedBox(height: 30),
-              const Text(
-                'Q2. 하루에 평균 몇시간 일하셨나요?',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                'Q1. 하루에 평균 몇시간 일하셨나요?',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 10),
               buildOption(
@@ -143,27 +122,31 @@ class _ExperienceDetailPageState extends State<ExperienceDetailPage> {
 
               const SizedBox(height: 30),
               const Text(
-                'Q3. 담당했던 근무지를 작성해주세요.',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                'Q2. 하루에 평균 몇 건을 배달하셨나요?',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _areaController,
-                decoration: InputDecoration(
-                  hintText: 'ex) 성북구',
-                  hintStyle: const TextStyle(color: Color(0xFFBDBDBD)),
-                  filled: true,
-                  fillColor: const Color(0xFFF6F6F6),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                ),
+              const SizedBox(height: 10),
+              buildOption(
+                text: '100건 이하',
+                selected: _selectedDeliveries == 0,
+                onTap: () => setState(() => _selectedDeliveries = 0),
               ),
+              buildOption(
+                text: '101~200건',
+                selected: _selectedDeliveries == 1,
+                onTap: () => setState(() => _selectedDeliveries = 1),
+              ),
+              buildOption(
+                text: '201~300건',
+                selected: _selectedDeliveries == 2,
+                onTap: () => setState(() => _selectedDeliveries = 2),
+              ),
+              buildOption(
+                text: '300건 이상',
+                selected: _selectedDeliveries == 3,
+                onTap: () => setState(() => _selectedDeliveries = 3),
+              ),
+
               const SizedBox(height: 20),
             ],
           ),
@@ -176,7 +159,7 @@ class _ExperienceDetailPageState extends State<ExperienceDetailPage> {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
-              Navigator.pushNamed(context, '/signup_waiting');
+              Navigator.pushNamed(context, '/signup_health');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF54D2A7),

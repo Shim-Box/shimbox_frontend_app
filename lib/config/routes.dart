@@ -8,6 +8,7 @@ import '../pages/signup/signup_account.dart'; //회원가입 아디비번
 import '../pages/signup/signup_license.dart'; //회원가입 자격증
 import '../pages/signup/signup_experience.dart'; //회원가입 경력 선택
 import '../pages/signup/signup_detail.dart'; //회원가입 경력 자세히
+import '../pages/signup/signup_health.dart'; //건강 상태
 import '../pages/signup/signup_waiting.dart'; //승인 대기
 
 final Map<String, WidgetBuilder> appRoutes = {
@@ -19,5 +20,6 @@ final Map<String, WidgetBuilder> appRoutes = {
   '/signup_license': (context) => const LicenseVerifyPage(),
   '/signup_experience': (context) => const ExperienceSelectPage(),
   '/signup_detail': (context) => const ExperienceDetailPage(),
+  '/signup_health': (context) => const SignupHealthPage(),
   '/signup_waiting': (context) => const SignupCompletePage(),
 };
