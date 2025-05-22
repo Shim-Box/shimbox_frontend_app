@@ -4,7 +4,7 @@ import 'package:shimbox_app/pages/signup/signup_experience.dart';
 import 'package:shimbox_app/pages/signup/signup_health.dart';
 import 'package:shimbox_app/pages/signup/signup_license.dart';
 import 'package:shimbox_app/pages/signup/signup_waiting.dart';
-import 'app.dart';
+// import 'app.dart';
 import 'package:get/get.dart';
 import 'bindings/init_bindings.dart';
 import 'pages/root/root.dart';

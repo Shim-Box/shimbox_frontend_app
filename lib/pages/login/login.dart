@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../home/home.dart'; //홈으로
 import '../root/root.dart';
 
 class LoginPage extends StatelessWidget {
