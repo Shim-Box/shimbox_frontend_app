@@ -5,19 +5,33 @@ import '../home/home.dart';
 import '../map/route_map.dart';
 import '../health/health_status.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../delivery/delivery_detail.dart';
 
 class RootPage extends GetView<BottomNavController> {
   RootPage({super.key});
 
-  final List<Widget> _pages = [HomePage(), MapPage(), HealthPage()];
+  final List<Widget> staticPages = [HomePage(), MapPage(), HealthPage()];
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      final pageIndex = controller.pageIndex.value;
+
+      Widget currentBody;
+      if (pageIndex < staticPages.length) {
+        currentBody = staticPages[pageIndex];
+      } else {
+        final selected = controller.selectedArea.value;
+        currentBody =
+            selected != null
+                ? DeliveryDetailPage(area: selected)
+                : Center(child: Text("잘못된 접근입니다."));
+      }
+
       return Scaffold(
-        body: _pages[controller.pageIndex.value],
+        body: currentBody,
         bottomNavigationBar: BottomNavigationBar(
-          currentIndex: controller.pageIndex.value,
+          currentIndex: pageIndex > 2 ? 0 : pageIndex, // 바텀바 인덱스 고정
           onTap: controller.changeBottomNav,
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.white,
