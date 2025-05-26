@@ -168,7 +168,7 @@ class _ExperienceDetailPageState extends State<ExperienceDetailPage> {
               ),
             ),
             child: const Text(
-              '완료',
+              '다음',
               style: TextStyle(fontSize: 18, color: Colors.white),
             ),
           ),
