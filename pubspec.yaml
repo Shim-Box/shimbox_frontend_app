@@ -64,6 +64,8 @@ flutter:
     - assets/images/signup/
     - assets/images/icons/
     - assets/images/health/
+    - assets/images/home/
+    - assets/images/delivery/
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
