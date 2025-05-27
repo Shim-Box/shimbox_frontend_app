@@ -8,6 +8,7 @@ class HealthConnectService {
   static const _scopes = [
     'https://www.googleapis.com/auth/fitness.activity.read',
     'https://www.googleapis.com/auth/fitness.location.read',
+    'https://www.googleapis.com/auth/fitness.heart_rate.read',
   ];
 
   static Future<dynamic> requestPermissions() async {
@@ -21,7 +22,6 @@ class HealthConnectService {
           await googleSignIn.signIn();
       if (account == null) return 'cancelled';
 
-      // 연동 성공 시 SharedPreferences에 상태 저장
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('health_connected', true);
 
@@ -81,11 +81,14 @@ class HealthConnectService {
       for (final b in bucket) {
         final dataset = b['dataset'] as List;
         for (final d in dataset) {
-          final points = d['point'] as List;
-          for (final p in points) {
-            final values = p['value'] as List;
-            for (final v in values) {
-              total += (v['intVal'] ?? 0) as int;
+          final sourceId = d['dataSourceId'] as String? ?? '';
+          if (sourceId.toLowerCase().contains('healthsync')) {
+            final points = d['point'] as List;
+            for (final p in points) {
+              final values = p['value'] as List;
+              for (final v in values) {
+                total += (v['intVal'] ?? 0) as int;
+              }
             }
           }
         }
@@ -117,6 +120,70 @@ class HealthConnectService {
     }
 
     return stepsPerDay;
+  }
+
+  static Future<int> getTodayHeartRateAvg() async {
+    final account = await _ensureSignedIn();
+    if (account == null) throw Exception('Google 로그인 실패');
+
+    final authHeaders = await account.authHeaders;
+    final client = GoogleAuthClient(authHeaders);
+
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, now.day);
+    final end = start.add(const Duration(days: 1));
+
+    final body = {
+      "aggregateBy": [
+        {"dataTypeName": "com.google.heart_rate.bpm"},
+      ],
+      "bucketByTime": {"durationMillis": 86400000},
+      "startTimeMillis": start.toUtc().millisecondsSinceEpoch,
+      "endTimeMillis": end.toUtc().millisecondsSinceEpoch,
+    };
+
+    final response = await client.post(
+      Uri.parse(
+        'https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate',
+      ),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      print('API Response: ${response.body}'); // API 응답 로그 추가
+      final bucket = json['bucket'] as List;
+      double total = 0;
+      int count = 0;
+
+      for (final b in bucket) {
+        final dataset = b['dataset'] as List;
+        for (final d in dataset) {
+          final points = d['point'] as List;
+          for (final p in points) {
+            final values = p['value'] as List;
+            for (final v in values) {
+              final rawValue = v['fpVal'];
+              if (rawValue != null) {
+                double heartRate =
+                    (rawValue is int)
+                        ? rawValue.toDouble()
+                        : (rawValue as double);
+                total += heartRate;
+                count++;
+              }
+            }
+          }
+        }
+      }
+
+      return count > 0 ? (total / count).round() : 0;
+    } else {
+      throw Exception(
+        'Google Fit API error: ${response.statusCode} - ${response.body}',
+      );
+    }
   }
 
   static Future<GoogleSignInAccount?> _ensureSignedIn() async {
