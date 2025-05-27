@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:shimbox_app/controllers/bottom_nav_controller.dart';
 
 class DeliveryDetailPage extends StatefulWidget {
   final Map<String, dynamic> area;
@@ -37,7 +40,7 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
           child: Center(
             child: GestureDetector(
               onTap: () {
-                Navigator.pop(context); // 뒤로 가기 기능
+                Get.find<BottomNavController>().changeBottomNav(0);
               },
               child: SizedBox(
                 width: 20,
