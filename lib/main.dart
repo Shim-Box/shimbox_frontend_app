@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shimbox_app/controllers/bottom_nav_controller.dart';
 import 'package:shimbox_app/pages/signup/signup_detail.dart';
 import 'package:shimbox_app/pages/signup/signup_experience.dart';
 import 'package:shimbox_app/pages/signup/signup_health.dart';
@@ -19,6 +20,9 @@ import 'pages/home/home.dart';
 
 void main() {
   runApp(const MyApp());
+  // Get.put(BottomNavController());
+
+  // runApp(GetMaterialApp(debugShowCheckedModeBanner: false, home: RootPage()));
 }
 
 class MyApp extends StatelessWidget {

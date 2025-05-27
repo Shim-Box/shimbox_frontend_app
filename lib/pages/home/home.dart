@@ -26,27 +26,13 @@ class _HomePageState extends State<HomePage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  bool isCheckedIn = false;
-  bool isCheckedOut = false;
-  String checkInTime = '';
-  String checkOutTime = '';
-
   bool showSurvey = false;
+  final bottomController = Get.find<BottomNavController>();
 
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
-  }
-
-  void resetState() {
-    setState(() {
-      isCheckedIn = false;
-      isCheckedOut = false;
-      checkInTime = '';
-      checkOutTime = '';
-      _currentPage = 0;
-    });
   }
 
   @override
@@ -139,18 +125,14 @@ class _HomePageState extends State<HomePage> {
                             '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
 
                         if (_currentPage == 0) {
-                          setState(() {
-                            isCheckedIn = true;
-                            checkInTime = time;
-                            isCheckedOut = false;
-                          });
+                          bottomController.isCheckedIn.value = true;
+                          bottomController.checkInTime.value = time;
+                          bottomController.isCheckedOut.value = false;
                         } else {
-                          if (isCheckedIn) {
-                            setState(() {
-                              isCheckedOut = true;
-                              checkOutTime = time;
-                              showSurvey = true;
-                            });
+                          if (bottomController.isCheckedIn.value) {
+                            bottomController.isCheckedOut.value = true;
+                            bottomController.checkOutTime.value = time;
+                            setState(() => showSurvey = true);
                           }
                         }
                       },
@@ -174,66 +156,69 @@ class _HomePageState extends State<HomePage> {
                                     (index) =>
                                         setState(() => _currentPage = index),
                                 itemBuilder: (context, index) {
-                                  String label = '';
-                                  String message = '길동님, 오늘 하루도 힘차게 시작해 볼까요?';
+                                  return Obx(() {
+                                    String label = '';
+                                    String message = '길동님, 오늘 하루도 힘차게 시작해 볼까요?';
 
-                                  if (index == 0) {
-                                    label =
-                                        isCheckedIn
-                                            ? '출근완료 $checkInTime'
-                                            : '출근';
-                                  } else {
-                                    if (isCheckedOut) {
-                                      label = '퇴근완료 $checkOutTime';
-                                      message = '길동님, 오늘 하루도 고생하셨어요';
+                                    if (index == 0) {
+                                      label =
+                                          bottomController.isCheckedIn.value
+                                              ? '출근완료 ${bottomController.checkInTime.value}'
+                                              : '출근';
                                     } else {
-                                      label = '퇴근';
+                                      if (bottomController.isCheckedOut.value) {
+                                        label =
+                                            '퇴근완료 ${bottomController.checkOutTime.value}';
+                                        message = '길동님, 오늘 하루도 고생하셨어요';
+                                      } else {
+                                        label = '퇴근';
+                                      }
                                     }
-                                  }
 
-                                  return Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            message,
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w500,
+                                    return Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              message,
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500,
+                                              ),
                                             ),
-                                          ),
-                                          SizedBox(height: 6),
-                                          Text(
-                                            label,
-                                            style: TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
+                                            SizedBox(height: 6),
+                                            Text(
+                                              label,
+                                              style: TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
                                             ),
+                                          ],
+                                        ),
+                                        Container(
+                                          padding: EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            shape: BoxShape.circle,
                                           ),
-                                        ],
-                                      ),
-                                      Container(
-                                        padding: EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          shape: BoxShape.circle,
+                                          child: Image.asset(
+                                            'assets/images/home/btncar.png',
+                                            width: 35,
+                                            height: 35,
+                                          ),
                                         ),
-                                        child: Image.asset(
-                                          'assets/images/home/btncar.png',
-                                          width: 35,
-                                          height: 35,
-                                        ),
-                                      ),
-                                    ],
-                                  );
+                                      ],
+                                    );
+                                  });
                                 },
                               ),
                             ),
@@ -394,6 +379,7 @@ class _HomePageState extends State<HomePage> {
                               padding: const EdgeInsets.only(left: 8),
                               child: Icon(Icons.chevron_right, size: 28),
                             ),
+
                             onTap: () {
                               final controller =
                                   Get.find<BottomNavController>();
@@ -413,7 +399,17 @@ class _HomePageState extends State<HomePage> {
         if (showSurvey)
           SurveyModule(
             onClose: (route) {
-              Get.offNamed(route);
+              bottomController.changeBottomNav(0);
+              _pageController.jumpToPage(0);
+
+              setState(() {
+                _currentPage = 0;
+                showSurvey = false;
+
+                // ✅ 여기! GetX 상태 초기화
+                bottomController.isCheckedIn.value = false;
+                bottomController.checkInTime.value = '';
+              });
             },
           ),
       ],
