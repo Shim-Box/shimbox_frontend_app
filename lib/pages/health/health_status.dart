@@ -15,6 +15,7 @@ class HealthPage extends StatefulWidget {
 class _HealthPageState extends State<HealthPage> {
   String _stepCount = '연동 필요';
   int? _weeklyAverage;
+  String _heartRate = '연동 필요';
   bool _isLoadingStep = false;
   bool _isLoadingHeartRate = false;
   bool _isHealthConnected = false;
@@ -47,16 +48,17 @@ class _HealthPageState extends State<HealthPage> {
     });
     if (isConnected) {
       _fetchStepCount();
+      _fetchHeartRate();
     } else {
       setState(() {
         _stepCount = '연동 필요';
+        _heartRate = '연동 필요';
       });
     }
   }
 
   Future<void> _tryConnectHealthService() async {
     if (_isHealthConnected) {
-      // 연동 완료 상태에서 버튼 클릭 시 해제 다이얼로그 표시
       final shouldDisconnect = await showDialog<bool>(
         context: context,
         builder:
@@ -81,6 +83,7 @@ class _HealthPageState extends State<HealthPage> {
         setState(() {
           _isHealthConnected = false;
           _stepCount = '연동 필요';
+          _heartRate = '연동 필요';
           _weeklyAverage = null;
         });
         ScaffoldMessenger.of(
@@ -90,24 +93,27 @@ class _HealthPageState extends State<HealthPage> {
       return;
     }
 
-    // 연동이 안 된 경우 WearablePage로 이동
     setState(() {
-      _isLoadingStep = true; // 연동 시도 중 로딩 시작
+      _isLoadingStep = true;
+      _isLoadingHeartRate = true;
     });
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (_) => const WearablePage()),
     );
     setState(() {
-      _isLoadingStep = false; // 연동 시도 후 로딩 종료
+      _isLoadingStep = false;
+      _isLoadingHeartRate = false;
     });
 
     if (result == true) {
       setState(() {
         _isHealthConnected = true;
         _stepCount = '...';
+        _heartRate = '...';
       });
       _fetchStepCount();
+      _fetchHeartRate();
     } else {
       ScaffoldMessenger.of(
         context,
@@ -151,18 +157,28 @@ class _HealthPageState extends State<HealthPage> {
   Future<void> _fetchHeartRate() async {
     setState(() {
       _isLoadingHeartRate = true;
+      _heartRate = '...';
     });
+
     try {
-      // TODO: HealthConnectService에서 심박수 데이터를 가져오는 로직 추가
-      // 예: final heartRate = await HealthConnectService.getHeartRate();
+      final heartRate = await HealthConnectService.getTodayHeartRateAvg();
       setState(() {
-        // TODO: 심박수 데이터 업데이트
-        // 예: _heartRate = heartRate.toString();
+        _heartRate = heartRate > 0 ? '$heartRate bpm' : '0';
       });
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('심박수 가져오기 실패: $e')));
+    } catch (e, stack) {
+      print('심박수 가져오기 오류: $e');
+      print('스택트레이스:\n$stack');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('심박수 데이터를 불러오는 데 실패했어요.\nGoogle Fit 연동을 확인해주세요.'),
+          duration: Duration(seconds: 4),
+        ),
+      );
+
+      setState(() {
+        _heartRate = '오류';
+      });
     } finally {
       setState(() => _isLoadingHeartRate = false);
     }
@@ -307,9 +323,15 @@ class _HealthPageState extends State<HealthPage> {
                       child: _healthCard(
                         iconPath: 'assets/images/health/heart.svg',
                         title: '심박수',
-                        value: _isHealthConnected ? '미연동' : '연동 필요',
-                        sub: '연동 필요',
-                        subColor: const Color(0xFF61D5AB),
+                        value: _isLoadingHeartRate ? '...' : _heartRate,
+                        sub:
+                            _isHealthConnected
+                                ? (_heartRate == '데이터 없음' || _heartRate == '오류'
+                                    ? '데이터 없음'
+                                    : '오늘 평균')
+                                : '연동 필요',
+                        subColor:
+                            _isHealthConnected ? null : const Color(0xFF61D5AB),
                         isLoading: _isLoadingHeartRate,
                         onRefresh: _isHealthConnected ? _fetchHeartRate : null,
                       ),
@@ -382,7 +404,6 @@ class _HealthPageState extends State<HealthPage> {
               ),
           ],
         ),
-        const SizedBox(height: 11),
         const SizedBox(height: 11),
         isLoading
             ? const CircularProgressIndicator(color: Color(0xFF61D5AB))

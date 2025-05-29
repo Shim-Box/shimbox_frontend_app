@@ -1,4 +1,4 @@
-package com.example.shimbox_app
+package com.shimbox.app
 
 import io.flutter.embedding.android.FlutterActivity
 
