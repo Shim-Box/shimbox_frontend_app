@@ -81,14 +81,11 @@ class HealthConnectService {
       for (final b in bucket) {
         final dataset = b['dataset'] as List;
         for (final d in dataset) {
-          final sourceId = d['dataSourceId'] as String? ?? '';
-          if (sourceId.toLowerCase().contains('healthsync')) {
-            final points = d['point'] as List;
-            for (final p in points) {
-              final values = p['value'] as List;
-              for (final v in values) {
-                total += (v['intVal'] ?? 0) as int;
-              }
+          final points = d['point'] as List;
+          for (final p in points) {
+            final values = p['value'] as List;
+            for (final v in values) {
+              total += (v['intVal'] ?? 0) as int;
             }
           }
         }
@@ -152,7 +149,6 @@ class HealthConnectService {
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
-      print('API Response: ${response.body}'); // API 응답 로그 추가
       final bucket = json['bucket'] as List;
       double total = 0;
       int count = 0;

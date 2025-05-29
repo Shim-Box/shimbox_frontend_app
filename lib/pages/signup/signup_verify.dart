@@ -36,63 +36,88 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
     super.dispose();
   }
 
-  bool get isPhoneValid => _phoneController.text.length == 11;
-  bool get isCodeValid => _codeController.text.length == 6;
+  bool get isPhoneValid => _phoneController.text.trim().length == 11;
+  bool get isCodeValid => _codeController.text.trim().length == 6;
 
-  static const hintStyle = TextStyle(color: Color(0xFFD2D2D2), fontSize: 14);
-  static const underlineBorder = UnderlineInputBorder(
-    borderSide: BorderSide(color: Color(0xFFD9D9D9)),
-  );
-  static const inputPadding = EdgeInsets.only(bottom: 6);
+  // --- Utils ---
+  String? formatPhoneNumber(String raw) {
+    raw = raw.trim();
+    if (raw.length == 11 && raw.startsWith('0')) {
+      return '+82${raw.substring(1)}';
+    }
+    return null;
+  }
 
+  void showSnack(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  // --- 인증 로직 ---
   Future<void> _sendCode() async {
-    await FirebaseAuth.instance.verifyPhoneNumber(
-      phoneNumber: '+82${_phoneController.text.substring(1)}',
-      timeout: const Duration(seconds: 60),
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        await FirebaseAuth.instance.signInWithCredential(credential);
-        setState(() => _isVerified = true);
-      },
-      verificationFailed: (FirebaseAuthException e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('인증 실패: ${e.message}')));
-      },
-      codeSent: (String verificationId, int? resendToken) {
-        setState(() {
+    final formatted = formatPhoneNumber(_phoneController.text);
+    if (formatted == null) {
+      showSnack('유효한 전화번호를 입력해주세요.');
+      return;
+    }
+
+    print('인증 요청: $formatted');
+
+    try {
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: formatted,
+        timeout: const Duration(seconds: 60),
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          print('✅ 자동 인증 완료');
+          await FirebaseAuth.instance.signInWithCredential(credential);
+          setState(() => _isVerified = true);
+          showSnack('자동 인증 성공!');
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          print('인증 실패: ${e.code}, ${e.message}');
+          showSnack('인증 실패: ${e.message}');
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          print('인증번호 전송됨 (verificationId: $verificationId)');
+          setState(() {
+            _verificationId = verificationId;
+            _codeSent = true;
+          });
+          showSnack('인증번호가 전송되었습니다.');
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          print('자동 인증 타임아웃');
           _verificationId = verificationId;
-          _codeSent = true;
-        });
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('인증번호가 전송되었습니다.')));
-      },
-      codeAutoRetrievalTimeout: (String verificationId) {
-        _verificationId = verificationId;
-      },
-    );
+        },
+      );
+    } catch (e) {
+      print('인증 요청 예외 발생: $e');
+      showSnack('인증 요청 중 오류 발생: $e');
+    }
   }
 
   Future<void> _verifyCode() async {
-    if (_verificationId == null) return;
+    if (_verificationId == null || !isCodeValid) {
+      showSnack('인증번호를 확인해주세요.');
+      return;
+    }
+
     final credential = PhoneAuthProvider.credential(
       verificationId: _verificationId!,
-      smsCode: _codeController.text,
+      smsCode: _codeController.text.trim(),
     );
 
     try {
       await FirebaseAuth.instance.signInWithCredential(credential);
       setState(() => _isVerified = true);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('인증 성공!')));
-    } catch (_) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('인증 실패, 코드 확인')));
+      showSnack('인증 성공!');
+    } catch (e) {
+      showSnack('인증 실패: ${e.toString()}');
     }
   }
 
+  // --- UI ---
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -137,6 +162,8 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                 ),
               ),
               const SizedBox(height: 40),
+
+              // 이름
               const Text(
                 '이름',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -149,15 +176,24 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                   maxLength: 3,
                   decoration: const InputDecoration(
                     hintText: '이름 입력',
-                    hintStyle: hintStyle,
+                    hintStyle: TextStyle(
+                      color: Color(0xFFD2D2D2),
+                      fontSize: 14,
+                    ),
                     counterText: '',
-                    enabledBorder: underlineBorder,
-                    focusedBorder: underlineBorder,
-                    contentPadding: inputPadding,
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFFD9D9D9)),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFFD9D9D9)),
+                    ),
+                    contentPadding: EdgeInsets.only(bottom: 6),
                   ),
                 ),
               ),
               const SizedBox(height: 40),
+
+              // 주민등록번호
               const Text(
                 '주민등록번호',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -173,11 +209,18 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
                         hintText: '앞 6자리',
-                        hintStyle: hintStyle,
+                        hintStyle: TextStyle(
+                          color: Color(0xFFD2D2D2),
+                          fontSize: 14,
+                        ),
                         counterText: '',
-                        enabledBorder: underlineBorder,
-                        focusedBorder: underlineBorder,
-                        contentPadding: inputPadding,
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFFD9D9D9)),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFFD9D9D9)),
+                        ),
+                        contentPadding: EdgeInsets.only(bottom: 6),
                       ),
                     ),
                   ),
@@ -194,9 +237,13 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
                         counterText: '',
-                        enabledBorder: underlineBorder,
-                        focusedBorder: underlineBorder,
-                        contentPadding: inputPadding,
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFFD9D9D9)),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFFD9D9D9)),
+                        ),
+                        contentPadding: EdgeInsets.only(bottom: 6),
                       ),
                     ),
                   ),
@@ -205,6 +252,8 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                 ],
               ),
               const SizedBox(height: 40),
+
+              // 전화번호
               const Text(
                 '전화번호 인증',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -219,11 +268,18 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                       keyboardType: TextInputType.phone,
                       decoration: const InputDecoration(
                         hintText: '전화번호 입력',
-                        hintStyle: hintStyle,
+                        hintStyle: TextStyle(
+                          color: Color(0xFFD2D2D2),
+                          fontSize: 14,
+                        ),
                         counterText: '',
-                        enabledBorder: underlineBorder,
-                        focusedBorder: underlineBorder,
-                        contentPadding: inputPadding,
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFFD9D9D9)),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFFD9D9D9)),
+                        ),
+                        contentPadding: EdgeInsets.only(bottom: 6),
                       ),
                     ),
                   ),
@@ -237,10 +293,7 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                       foregroundColor:
                           isPhoneValid ? Colors.white : Color(0xFFD3D3D3),
                       side: BorderSide(
-                        color:
-                            isPhoneValid
-                                ? Colors.black
-                                : const Color(0xFFD3D3D3),
+                        color: isPhoneValid ? Colors.black : Color(0xFFD3D3D3),
                       ),
                     ),
                     child: const Text('인증요청', style: TextStyle(fontSize: 13)),
@@ -258,11 +311,18 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
                           hintText: '인증 번호 입력',
-                          hintStyle: hintStyle,
+                          hintStyle: TextStyle(
+                            color: Color(0xFFD2D2D2),
+                            fontSize: 14,
+                          ),
                           counterText: '',
-                          enabledBorder: underlineBorder,
-                          focusedBorder: underlineBorder,
-                          contentPadding: inputPadding,
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Color(0xFFD9D9D9)),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Color(0xFFD9D9D9)),
+                          ),
+                          contentPadding: EdgeInsets.only(bottom: 6),
                         ),
                       ),
                     ),

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:shimbox_app/controllers/bottom_nav_controller.dart';
 
 class SurveyModule extends StatefulWidget {
   final void Function(String route) onClose;
@@ -81,9 +84,10 @@ class _SurveyModuleState extends State<SurveyModule> {
                         padding: EdgeInsets.zero,
                       ),
                       onPressed: () {
-                        Navigator.of(context).pop();
-                        widget.onClose('/root');
+                        // Get.find<BottomNavController>().changeBottomNav(0);
+                        widget.onClose('');
                       },
+
                       child: Text(
                         '제출',
                         style: TextStyle(

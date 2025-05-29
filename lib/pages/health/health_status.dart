@@ -163,11 +163,11 @@ class _HealthPageState extends State<HealthPage> {
     try {
       final heartRate = await HealthConnectService.getTodayHeartRateAvg();
       setState(() {
-        _heartRate = heartRate > 0 ? '$heartRate bpm' : '데이터 없음';
+        _heartRate = heartRate > 0 ? '$heartRate bpm' : '0';
       });
     } catch (e, stack) {
       print('심박수 가져오기 오류: $e');
-      print('스택트레이스:\n$stack'); // logcat에서 확인 가능
+      print('스택트레이스:\n$stack');
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

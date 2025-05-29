@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:shimbox_app/controllers/bottom_nav_controller.dart';
 
 class DeliveryDetailPage extends StatefulWidget {
   final Map<String, dynamic> area;
@@ -11,7 +14,7 @@ class DeliveryDetailPage extends StatefulWidget {
 }
 
 class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
-  int? expandedIndex; // 현재 펼쳐진 인덱스
+  int? expandedIndex;
 
   final List<Map<String, dynamic>> deliveryAreas = [
     {'name': '고척동', 'total': 20},
@@ -19,6 +22,12 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
     {'name': '신도림동', 'total': 100},
     {'name': '개봉동', 'total': 30},
   ];
+
+  // 배송 상태
+  List<List<int>> deliveryStatus = List.generate(
+    4,
+    (_) => List.generate(2, (_) => 0),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +46,7 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
           child: Center(
             child: GestureDetector(
               onTap: () {
-                Navigator.pop(context); // 뒤로 가기 기능
+                Get.find<BottomNavController>().changeBottomNav(0);
               },
               child: SizedBox(
                 width: 20,
@@ -123,9 +132,11 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
                 ),
                 if (isExpanded)
                   Column(
-                    children: [SizedBox(height: 10), _buildDropdownContent()],
+                    children: [
+                      SizedBox(height: 10),
+                      _buildDropdownContent(index),
+                    ],
                   ),
-
                 SizedBox(height: 12),
               ],
             );
@@ -135,10 +146,14 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
     );
   }
 
-  Widget _buildDropdownContent() {
+  Widget _buildDropdownContent(int areaIndex) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: List.generate(2, (i) {
+        int status = deliveryStatus[areaIndex][i];
+        Color textColor = status == 2 ? Color(0xFF7A7A7A) : Colors.black;
+        Color iconColor = status == 2 ? Color(0xFF7A7A7A) : Color(0xFF61D5AB);
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -148,12 +163,13 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
                         '경기도 광명시 광명 2동',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
+                          color: textColor,
                         ),
                       ),
                       Text(
@@ -161,6 +177,7 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
+                          color: textColor,
                         ),
                       ),
                     ],
@@ -171,46 +188,99 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
                   'assets/images/delivery/phone.svg',
                   width: 20,
                   height: 20,
+                  color: iconColor,
                 ),
                 SizedBox(width: 12),
-                SvgPicture.asset(
-                  'assets/images/delivery/nav.svg',
-                  width: 20,
-                  height: 20,
+                GestureDetector(
+                  child: SvgPicture.asset(
+                    'assets/images/delivery/nav.svg',
+                    width: 20,
+                    height: 20,
+                    color: iconColor,
+                  ),
                 ),
               ],
             ),
             SizedBox(height: 8),
             Text(
               '배송 건수 : ${i + 1}건',
-              style: TextStyle(color: Colors.blue, fontSize: 14),
+              style: TextStyle(color: textColor, fontSize: 14),
             ),
             SizedBox(height: 16),
-            OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Color(0xFF61D5AB),
-                side: BorderSide(color: Color(0xFF61D5AB)),
-                minimumSize: Size(double.infinity, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
-              child: Text(
-                '배송 시작',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
+            _buildStatusButton(areaIndex, i, status),
             SizedBox(height: 24),
-
-            // ✅ 구분선 추가
             if (i < 1)
               Divider(color: Colors.grey[300], thickness: 1, height: 1),
-
             SizedBox(height: 24),
           ],
         );
       }),
     );
+  }
+
+  Widget _buildStatusButton(int areaIndex, int i, int status) {
+    if (status == 2) {
+      return OutlinedButton(
+        onPressed: null,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Color(0xFFAAAAAA),
+          side: BorderSide(color: Color(0xFFAAAAAA)),
+          minimumSize: Size(double.infinity, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+          backgroundColor: Colors.white,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SvgPicture.asset(
+              'assets/images/delivery/complete.svg',
+              width: 20,
+              height: 20,
+              color: Color(0xFFAAAAAA),
+            ),
+            SizedBox(width: 8),
+            Text('배송 완료', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+      );
+    } else if (status == 1) {
+      return ElevatedButton(
+        onPressed: () {
+          setState(() {
+            deliveryStatus[areaIndex][i] += 1;
+          });
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Color(0xFF61D5AB),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          minimumSize: Size(double.infinity, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+        ),
+        child: Text('배송 도착', style: TextStyle(fontWeight: FontWeight.bold)),
+      );
+    } else {
+      return OutlinedButton(
+        onPressed: () {
+          setState(() {
+            deliveryStatus[areaIndex][i] += 1;
+          });
+        },
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Color(0xFF61D5AB),
+          side: BorderSide(color: Color(0xFF61D5AB)),
+          backgroundColor: Colors.white,
+          minimumSize: Size(double.infinity, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+        ),
+        child: Text('배송 시작', style: TextStyle(fontWeight: FontWeight.bold)),
+      );
+    }
   }
 }
