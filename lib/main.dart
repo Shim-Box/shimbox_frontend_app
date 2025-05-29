@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shimbox_app/pages/signup/signup_detail.dart';
-import 'package:shimbox_app/pages/signup/signup_experience.dart';
-import 'package:shimbox_app/pages/signup/signup_health.dart';
-import 'package:shimbox_app/pages/signup/signup_license.dart';
-import 'package:shimbox_app/pages/signup/signup_waiting.dart';
-// import 'app.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
 import 'package:get/get.dart';
 import 'bindings/init_bindings.dart';
 import 'pages/root/root.dart';
@@ -13,11 +10,18 @@ import 'pages/start.dart';
 import 'pages/login/login.dart';
 import 'pages/signup/signup_verify.dart';
 import 'pages/signup/signup_account.dart';
+import 'pages/signup/signup_license.dart';
+import 'pages/signup/signup_experience.dart';
+import 'pages/signup/signup_detail.dart';
+import 'pages/signup/signup_health.dart';
+import 'pages/signup/signup_waiting.dart';
 import 'pages/health/health_status.dart';
 import 'pages/wearable/wearable.dart';
 import 'pages/home/home.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // 필수!
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -27,6 +31,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
+      debugShowCheckedModeBanner: false,
       initialBinding: InitBindings(),
       initialRoute: '/splash',
       getPages: [

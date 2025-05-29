@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "337576916905",
+    "project_id": "shimbox",
+    "storage_bucket": "shimbox.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:337576916905:android:b70fcd25c23e4ac60ab6b8",
+        "android_client_info": {
+          "package_name": "com.shimbox.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "337576916905-6aj7p3ti9cannc1osldru8gbg0mit2r5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.shimbox.app",
+            "certificate_hash": "448649b2428be1f23ad697fc5a27a572f34362f7"
+          }
+        },
+        {
+          "client_id": "337576916905-c4ju7fsmtr975e2cdp4d5et5es3ofoct.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.shimbox.app",
+            "certificate_hash": "251979510cad3b0a79d971835ca47dc836d5f269"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABqSVMnRty7USR-XkC5kRXbqzS4Op5-IQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

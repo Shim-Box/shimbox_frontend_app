@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SignupVerifyPage extends StatefulWidget {
   const SignupVerifyPage({super.key});
@@ -13,6 +14,10 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
   final _rrnBackController = TextEditingController();
   final _phoneController = TextEditingController();
   final _codeController = TextEditingController();
+
+  String? _verificationId;
+  bool _isVerified = false;
+  bool _codeSent = false;
 
   @override
   void initState() {
@@ -39,6 +44,54 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
     borderSide: BorderSide(color: Color(0xFFD9D9D9)),
   );
   static const inputPadding = EdgeInsets.only(bottom: 6);
+
+  Future<void> _sendCode() async {
+    await FirebaseAuth.instance.verifyPhoneNumber(
+      phoneNumber: '+82${_phoneController.text.substring(1)}',
+      timeout: const Duration(seconds: 60),
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        await FirebaseAuth.instance.signInWithCredential(credential);
+        setState(() => _isVerified = true);
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('인증 실패: ${e.message}')));
+      },
+      codeSent: (String verificationId, int? resendToken) {
+        setState(() {
+          _verificationId = verificationId;
+          _codeSent = true;
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('인증번호가 전송되었습니다.')));
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {
+        _verificationId = verificationId;
+      },
+    );
+  }
+
+  Future<void> _verifyCode() async {
+    if (_verificationId == null) return;
+    final credential = PhoneAuthProvider.credential(
+      verificationId: _verificationId!,
+      smsCode: _codeController.text,
+    );
+
+    try {
+      await FirebaseAuth.instance.signInWithCredential(credential);
+      setState(() => _isVerified = true);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('인증 성공!')));
+    } catch (_) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('인증 실패, 코드 확인')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +137,6 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                 ),
               ),
               const SizedBox(height: 40),
-
               const Text(
                 '이름',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -106,7 +158,6 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                 ),
               ),
               const SizedBox(height: 40),
-
               const Text(
                 '주민등록번호',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -154,7 +205,6 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                 ],
               ),
               const SizedBox(height: 40),
-
               const Text(
                 '전화번호 인증',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -179,7 +229,7 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                   ),
                   const SizedBox(width: 8),
                   OutlinedButton(
-                    onPressed: isPhoneValid ? () => print("인증요청") : null,
+                    onPressed: isPhoneValid ? _sendCode : null,
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(100, 40),
                       backgroundColor:
@@ -197,44 +247,40 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 15),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _codeController,
-                      maxLength: 6,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        hintText: '인증 번호 입력',
-                        hintStyle: hintStyle,
-                        counterText: '',
-                        enabledBorder: underlineBorder,
-                        focusedBorder: underlineBorder,
-                        contentPadding: inputPadding,
+              if (_codeSent) ...[
+                const SizedBox(height: 15),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _codeController,
+                        maxLength: 6,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          hintText: '인증 번호 입력',
+                          hintStyle: hintStyle,
+                          counterText: '',
+                          enabledBorder: underlineBorder,
+                          focusedBorder: underlineBorder,
+                          contentPadding: inputPadding,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: isCodeValid ? () => print("확인") : null,
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(100, 40),
-                      backgroundColor:
-                          isCodeValid ? Colors.black : Colors.transparent,
-                      foregroundColor:
-                          isCodeValid ? Colors.white : Color(0xFFD3D3D3),
-                      side: BorderSide(
-                        color:
-                            isCodeValid
-                                ? Colors.black
-                                : const Color(0xFFD3D3D3),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: isCodeValid ? _verifyCode : null,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(100, 40),
+                        backgroundColor:
+                            isCodeValid ? Colors.black : Colors.transparent,
+                        foregroundColor:
+                            isCodeValid ? Colors.white : Color(0xFFD3D3D3),
                       ),
+                      child: const Text('확인', style: TextStyle(fontSize: 13)),
                     ),
-                    child: const Text('확인', style: TextStyle(fontSize: 13)),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -245,11 +291,15 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
           width: double.infinity,
           height: 60,
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/signup_account');
-            },
+            onPressed:
+                _isVerified
+                    ? () => Navigator.pushNamed(context, '/signup_account')
+                    : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF54D2A7),
+              backgroundColor:
+                  _isVerified
+                      ? const Color(0xFF54D2A7)
+                      : const Color(0xFFD3D3D3),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),

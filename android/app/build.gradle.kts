@@ -1,10 +1,9 @@
 import java.util.Properties
-import java.io.FileInputStream
 
 plugins {
     id("com.android.application")
-    id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id("org.jetbrains.kotlin.android") version "2.1.0"
+    id("com.google.gms.google-services")
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -19,36 +18,31 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = "11"
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.shimbox.app"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 21
+        minSdk = 23
         targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
     signingConfigs {
-    create("release") {
-        val keystoreProperties = Properties().apply {
-            load(File(rootDir, "key.properties").inputStream())
+        create("release") {
+            val keystoreProperties = Properties().apply {
+                load(File(rootDir, "key.properties").inputStream())
+            }
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
         }
-        storeFile = file(keystoreProperties["storeFile"] as String)
-        storePassword = keystoreProperties["storePassword"] as String
-        keyAlias = keystoreProperties["keyAlias"] as String
-        keyPassword = keystoreProperties["keyPassword"] as String
-    }
     }
 
     buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+        getByName("release") {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             isShrinkResources = false
@@ -58,4 +52,8 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
 }
