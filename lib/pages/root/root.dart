@@ -16,8 +16,9 @@ class RootPage extends GetView<BottomNavController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final pageIndex = controller.pageIndex.value;
-
       Widget currentBody;
+
+      // ✅ index가 3 이상이면 DeliveryDetailPage를 띄움
       if (pageIndex < staticPages.length) {
         currentBody = staticPages[pageIndex];
       } else {
@@ -31,7 +32,8 @@ class RootPage extends GetView<BottomNavController> {
       return Scaffold(
         body: currentBody,
         bottomNavigationBar: BottomNavigationBar(
-          currentIndex: pageIndex > 2 ? 0 : pageIndex, // 바텀바 인덱스 고정
+          currentIndex:
+              pageIndex > 2 ? 0 : pageIndex, // ✅ DeliveryDetailPage는 탭 고정
           onTap: controller.changeBottomNav,
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.white,

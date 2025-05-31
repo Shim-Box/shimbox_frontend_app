@@ -380,10 +380,10 @@ class _HomePageState extends State<HomePage> {
                               child: Icon(Icons.chevron_right, size: 28),
                             ),
 
+                            // home.dart
                             onTap: () {
-                              final controller =
-                                  Get.find<BottomNavController>();
-                              controller.goToDeliveryDetail(area);
+                              Get.find<BottomNavController>()
+                                  .goToDeliveryDetail(area);
                             },
                           ),
                         );

@@ -16,6 +16,7 @@ import 'pages/signup/signup_account.dart';
 import 'pages/health/health_status.dart';
 import 'pages/wearable/wearable.dart';
 import 'pages/home/home.dart';
+import 'pages/main_scaffold.dart';
 
 void main() {
   runApp(const MyApp());
@@ -43,7 +44,8 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/home', page: () => RootPage()),
         GetPage(name: '/health_status', page: () => HealthPage()),
         GetPage(name: '/wearable', page: () => WearablePage()),
-        GetPage(name: '/main', page: () => HomePage()),
+        // GetPage(name: '/main', page: () => HomePage()),
+        GetPage(name: '/main', page: () => MainScaffold()),
       ],
     );
   }
