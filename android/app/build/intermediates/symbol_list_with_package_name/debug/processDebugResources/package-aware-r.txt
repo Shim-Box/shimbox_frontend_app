@@ -1636,3 +1636,4 @@ styleable ViewStubCompat android_id android_layout android_inflatedId
 xml flutter_image_picker_file_paths
 xml ga_ad_services_config
 xml image_share_filepaths
+xml network_security_config

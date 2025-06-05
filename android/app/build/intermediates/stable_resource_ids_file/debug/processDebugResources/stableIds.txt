@@ -1531,6 +1531,7 @@ com.shimbox.app:animator/fragment_fade_exit = 0x7f020003
 com.shimbox.app:attr/buttonBarNeutralButtonStyle = 0x7f030042
 com.shimbox.app:style/Widget.AppCompat.PopupWindow = 0x7f0f016b
 com.shimbox.app:id/custom = 0x7f08005b
+com.shimbox.app:xml/network_security_config = 0x7f110003
 com.shimbox.app:attr/popupMenuStyle = 0x7f0300f7
 com.shimbox.app:attr/buttonStyleSmall = 0x7f03004b
 com.shimbox.app:attr/seekBarStyle = 0x7f030119

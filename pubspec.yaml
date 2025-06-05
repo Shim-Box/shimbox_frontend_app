@@ -60,6 +60,10 @@ dependencies:
   url_launcher: ^6.2.5
   image_picker: ^1.1.2
 
+  webview_flutter: ^4.2.2
+  geolocator: ^10.1.0
+  webview_flutter_android: ^3.10.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -95,6 +99,8 @@ flutter:
     - assets/images/wearable/
     - assets/images/home/
     - assets/images/delivery/
+    - assets/images/map/
+    - assets/map.html
 
   # To add assets to your application, add an assets section, like this:
   # assets:
