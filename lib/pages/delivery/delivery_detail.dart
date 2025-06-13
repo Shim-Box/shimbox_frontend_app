@@ -3,6 +3,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:shimbox_app/controllers/bottom_nav_controller.dart';
+import 'package:shimbox_app/utils/navigation_helper.dart';
+import 'package:shimbox_app/pages/delivery/photo_capture_modal.dart'; // ✅ 사진 모달 임포트
+import 'package:url_launcher/url_launcher.dart';
+import 'package:shimbox_app/utils/firebase_uploader.dart';
+import '../../utils/api_service.dart';
 
 class DeliveryDetailPage extends StatefulWidget {
   final Map<String, dynamic> area;
@@ -16,18 +21,41 @@ class DeliveryDetailPage extends StatefulWidget {
 class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
   int? expandedIndex;
 
-  final List<Map<String, dynamic>> deliveryAreas = [
-    {'name': '고척동', 'total': 20},
-    {'name': '오류동', 'total': 30},
-    {'name': '신도림동', 'total': 100},
-    {'name': '개봉동', 'total': 30},
-  ];
-
-  // 배송 상태
   List<List<int>> deliveryStatus = List.generate(
     4,
     (_) => List.generate(2, (_) => 0),
   );
+
+  final List<Map<String, dynamic>> deliveryAreas = [
+    {
+      'id': 1,
+      'name': '노원구 상계동',
+      'total': 20,
+      'address': '서울특별시 노원구 동일로 1345',
+      'phone': '01093767255',
+    },
+    {
+      'id': 1,
+      'name': '강서구 방화동',
+      'total': 30,
+      'address': '서울특별시 강서구 금낭화로 168',
+      'phone': '01093767255',
+    },
+    {
+      'id': 1,
+      'name': '강남구 삼성동',
+      'total': 15,
+      'address': '서울특별시 강남구 봉은사로 524',
+      'phone': '01093767255',
+    },
+    {
+      'id': 1,
+      'name': '송파구 잠실동',
+      'total': 25,
+      'address': '서울특별시 송파구 올림픽로 300',
+      'phone': '01093767255',
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +162,7 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
                   Column(
                     children: [
                       SizedBox(height: 10),
-                      _buildDropdownContent(index),
+                      _buildDropdownContent(index, deliveryAreas[index]),
                     ],
                   ),
                 SizedBox(height: 12),
@@ -146,7 +174,7 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
     );
   }
 
-  Widget _buildDropdownContent(int areaIndex) {
+  Widget _buildDropdownContent(int areaIndex, Map<String, dynamic> item) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: List.generate(2, (i) {
@@ -165,7 +193,7 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '경기도 광명시 광명 2동',
+                        '${item['name']}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
@@ -173,7 +201,7 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
                         ),
                       ),
                       Text(
-                        '오리로 52-2 (산타빌라 205호)',
+                        '${item['address']}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
@@ -192,6 +220,9 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
                 ),
                 SizedBox(width: 12),
                 GestureDetector(
+                  onTap: () async {
+                    await startNaviToAddressWithNaver(item['address']);
+                  },
                   child: SvgPicture.asset(
                     'assets/images/delivery/nav.svg',
                     width: 20,
@@ -207,7 +238,7 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
               style: TextStyle(color: textColor, fontSize: 14),
             ),
             SizedBox(height: 16),
-            _buildStatusButton(areaIndex, i, status),
+            _buildStatusButton(areaIndex, i, status, item), // ✅ item 전달
             SizedBox(height: 24),
             if (i < 1)
               Divider(color: Colors.grey[300], thickness: 1, height: 1),
@@ -218,7 +249,12 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
     );
   }
 
-  Widget _buildStatusButton(int areaIndex, int i, int status) {
+  Widget _buildStatusButton(
+    int areaIndex,
+    int i,
+    int status,
+    Map<String, dynamic> item,
+  ) {
     if (status == 2) {
       return OutlinedButton(
         onPressed: null,
@@ -247,10 +283,70 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
       );
     } else if (status == 1) {
       return ElevatedButton(
-        onPressed: () {
-          setState(() {
-            deliveryStatus[areaIndex][i] += 1;
-          });
+        onPressed: () async {
+          final imageSent = await showDialog(
+            context: context,
+            useRootNavigator: false,
+            builder:
+                (_) => PhotoCaptureModal(
+                  phoneNumber: item['phone'],
+                  onSend: (image) async {
+                    final fileName =
+                        'delivery_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+                    // ✅ Firebase에 이미지 업로드
+                    final url = await FirebaseUploader.uploadImageToFirebase(
+                      image,
+                      fileName,
+                      folder: 'deliveries',
+                    );
+
+                    if (url != null) {
+                      // ✅ 문자 내용 구성
+                      final smsText = '''
+배송이 완료되었습니다.
+사진 확인: $url
+''';
+
+                      final uri = Uri.parse(
+                        'sms:${item['phone']}?body=${Uri.encodeComponent(smsText)}',
+                      );
+
+                      // ✅ 문자 앱 열기
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('문자 앱을 열 수 없습니다.')),
+                        );
+                      }
+
+                      // ✅ 상태 갱신
+                      setState(() {
+                        deliveryStatus[areaIndex][i] = 2;
+                      });
+
+                      final ctrl = Get.find<BottomNavController>();
+                      ctrl.selectedArea.value = widget.area;
+                      ctrl.pageIndex.value = 3;
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Firebase 업로드 실패')),
+                      );
+                    }
+                    await ApiService.post('/api/v1/driver/delivery/image', {
+                      'productId': item['id'],
+                      'imageUrl': url?.trim(),
+                    });
+                  },
+                ),
+          );
+
+          if (imageSent == true) {
+            setState(() {
+              deliveryStatus[areaIndex][i] = 2;
+            });
+          }
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFF61D5AB),
@@ -267,7 +363,7 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
       return OutlinedButton(
         onPressed: () {
           setState(() {
-            deliveryStatus[areaIndex][i] += 1;
+            deliveryStatus[areaIndex][i] = 1; // 이제 배송 시작 → 배송 도착 버튼으로 바뀜
           });
         },
         style: OutlinedButton.styleFrom(

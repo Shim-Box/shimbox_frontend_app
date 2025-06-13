@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../models/signup_data.dart';
+import '../../utils/database.dart';
 
 class ExperienceSelectPage extends StatefulWidget {
   const ExperienceSelectPage({super.key});
@@ -15,6 +17,18 @@ class _ExperienceSelectPageState extends State<ExperienceSelectPage> {
     {'title': '경력자', 'subtitle': '1~2년'},
     {'title': '숙련자', 'subtitle': '3~4년 이상'},
   ];
+
+  // 경력 데이터를 SignupData에 저장하고 다음 화면으로 이동
+  void _submitExperience() {
+    final selectedCareer = experienceOptions[selectedIndex]['title'];
+    signupData.career = selectedCareer;
+
+    if (selectedCareer == '초보자') {
+      Navigator.pushNamed(context, '/signup_health');
+    } else {
+      Navigator.pushNamed(context, '/signup_detail');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,11 +153,12 @@ class _ExperienceSelectPageState extends State<ExperienceSelectPage> {
           width: double.infinity,
           height: 60,
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/signup_detail');
-            },
+            onPressed: selectedIndex >= 0 ? _submitExperience : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF54D2A7),
+              backgroundColor:
+                  selectedIndex >= 0
+                      ? const Color(0xFF54D2A7)
+                      : const Color(0xFFD3D3D3),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),

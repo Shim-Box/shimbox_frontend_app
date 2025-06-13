@@ -3,8 +3,14 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android") version "2.1.0"
-    id("com.google.gms.google-services")
+    id("com.google.gms.google-services") // ✅ 여기에만 있어야 함
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+repositories {
+    google()
+    mavenCentral()
+    jcenter()
 }
 
 android {
@@ -27,6 +33,7 @@ android {
         targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -47,6 +54,10 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
         }
+        release {
+            isMinifyEnabled = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
     }
 }
 
@@ -56,4 +67,11 @@ flutter {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
+
+    // ✅ Firebase BOM
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+
+    // ✅ Firebase modules
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-analytics")
 }

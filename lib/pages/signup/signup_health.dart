@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../models/signup_data.dart'; // SignupData import 추가
+import '../../utils/database.dart'; // DatabaseHelper import 추가
+import '../../utils/api_service.dart';
 
 class SignupHealthPage extends StatefulWidget {
   const SignupHealthPage({super.key});
@@ -11,6 +14,21 @@ class _SignupHealthPageState extends State<SignupHealthPage> {
   String _selectedHealthStatus = '없음';
 
   final List<String> _healthOptions = ['없음', '고혈압', '저혈압'];
+
+  // 데이터 저장 및 데이터베이스 연동 메서드
+  Future<void> _submitHealth() async {
+    signupData.bloodPressure = _selectedHealthStatus;
+
+    final success = await ApiService.registerUser(signupData);
+
+    if (success) {
+      Navigator.pushNamed(context, '/signup_waiting');
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('회원가입에 실패했습니다. 다시 시도해주세요.')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,9 +120,7 @@ class _SignupHealthPageState extends State<SignupHealthPage> {
           height: 60,
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/signup_waiting');
-            },
+            onPressed: _submitHealth, // 비동기 메서드로 연결
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF54D2A7),
               shape: RoundedRectangleBorder(

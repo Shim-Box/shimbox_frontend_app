@@ -1,8 +1,58 @@
 import 'package:flutter/material.dart';
+import 'package:shimbox_app/models/login_data.dart';
+import 'package:shimbox_app/utils/api_service.dart';
 import '../root/root.dart';
+import 'package:shimbox_app/models/test_user_data.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  Future<void> _login() async {
+    final loginData = LoginData(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
+
+    final result = await ApiService.loginUser(loginData);
+    print('서버 응답값: $result');
+
+    if (result != null) {
+      final data = result['data'];
+
+      // 승인 여부 확인
+      if (data['approvalStatus'] != true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('❗승인되지 않은 계정입니다. 관리자에게 문의하세요.')),
+        );
+        return;
+      }
+
+      // 승인된 사용자일 경우 정보 저장
+      UserData.name = data['name'];
+      UserData.token = data['accessToken'];
+      UserData.email = loginData.email;
+
+      print('✅ 저장된 사용자 이름: ${UserData.name}');
+      print('✅ 저장된 토큰: ${UserData.token}');
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => RootPage()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('❗계정이 존재하지 않거나 비밀번호가 틀렸습니다')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,8 +77,9 @@ class LoginPage extends StatelessWidget {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                const TextField(
-                  decoration: InputDecoration(
+                TextField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 10),
                     enabledBorder: UnderlineInputBorder(
@@ -49,9 +100,10 @@ class LoginPage extends StatelessWidget {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                const TextField(
+                TextField(
+                  controller: _passwordController,
                   obscureText: true,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 10),
                     enabledBorder: UnderlineInputBorder(
@@ -64,7 +116,7 @@ class LoginPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // 링크 (회원가입만 클릭 가능)
+                // 링크
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -73,8 +125,7 @@ class LoginPage extends StatelessWidget {
                       style: TextStyle(fontSize: 13, color: Color(0xFFBDBDBD)),
                     ),
                     GestureDetector(
-                      onTap:
-                          () => Navigator.pushNamed(context, '/signup_verify'),
+                      onTap: () => Navigator.pushNamed(context, '/start'),
                       child: const Text(
                         '회원가입',
                         style: TextStyle(
@@ -93,13 +144,7 @@ class LoginPage extends StatelessWidget {
                   width: double.infinity,
                   height: 55,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        //홈으로 예비
-                        context,
-                        MaterialPageRoute(builder: (context) => RootPage()),
-                      );
-                    },
+                    onPressed: _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF54D2A7),
                       shape: const StadiumBorder(),

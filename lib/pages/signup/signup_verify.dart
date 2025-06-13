@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../models/signup_data.dart';
+import '../../utils/database.dart';
 
 class SignupVerifyPage extends StatefulWidget {
   const SignupVerifyPage({super.key});
@@ -115,6 +117,14 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
     } catch (e) {
       showSnack('인증 실패: ${e.toString()}');
     }
+  }
+
+  // --- 새로 추가: 데이터 저장 및 이동 ---
+  void _submitVerification() {
+    signupData.name = _nameController.text.trim();
+    signupData.phoneNumber = _phoneController.text.trim();
+    signupData.birth = _rrnFrontController.text.trim();
+    Navigator.pushNamed(context, '/signup_account');
   }
 
   // --- UI ---
@@ -288,12 +298,15 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                     onPressed: isPhoneValid ? _sendCode : null,
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(100, 40),
-                      backgroundColor:
-                          isPhoneValid ? Colors.black : Colors.transparent,
                       foregroundColor:
-                          isPhoneValid ? Colors.white : Color(0xFFD3D3D3),
+                          isPhoneValid
+                              ? const Color(0xFF54D2A7)
+                              : const Color(0xFFD3D3D3),
                       side: BorderSide(
-                        color: isPhoneValid ? Colors.black : Color(0xFFD3D3D3),
+                        color:
+                            isPhoneValid
+                                ? const Color(0xFF54D2A7)
+                                : const Color(0xFFD3D3D3),
                       ),
                     ),
                     child: const Text('인증요청', style: TextStyle(fontSize: 13)),
@@ -332,9 +345,13 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(100, 40),
                         backgroundColor:
-                            isCodeValid ? Colors.black : Colors.transparent,
+                            isCodeValid
+                                ? const Color(0xFF54D2A7)
+                                : Colors.transparent,
                         foregroundColor:
-                            isCodeValid ? Colors.white : Color(0xFFD3D3D3),
+                            isCodeValid
+                                ? Colors.white
+                                : const Color(0xFFD3D3D3),
                       ),
                       child: const Text('확인', style: TextStyle(fontSize: 13)),
                     ),
@@ -351,10 +368,7 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
           width: double.infinity,
           height: 60,
           child: ElevatedButton(
-            onPressed:
-                _isVerified
-                    ? () => Navigator.pushNamed(context, '/signup_account')
-                    : null,
+            onPressed: _isVerified ? _submitVerification : null,
             style: ElevatedButton.styleFrom(
               backgroundColor:
                   _isVerified

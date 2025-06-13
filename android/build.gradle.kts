@@ -6,6 +6,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        jcenter()
     }
 
     // Kotlin 플러그인 및 의존성을 강제로 2.1.0으로 통일

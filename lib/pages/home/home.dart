@@ -9,6 +9,8 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:shimbox_app/controllers/bottom_nav_controller.dart';
 import './alarmScreen.dart';
 import '../delivery/delivery_detail.dart';
+import 'package:shimbox_app/models/test_user_data.dart';
+import 'package:shimbox_app/utils/api_service.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -67,12 +69,13 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '홍길동님',
+                                '${UserData.name ?? '사용자'}님',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 18,
                                 ),
                               ),
+
                               SizedBox(height: 4),
                               Row(
                                 children: [
@@ -119,23 +122,44 @@ class _HomePageState extends State<HomePage> {
                   // 출근/퇴근 박스
                   Center(
                     child: GestureDetector(
-                      onTap: () {
+                      onTap: () async {
+                        print('🟢 버튼 눌림: $_currentPage');
+
                         final now = DateTime.now();
                         final time =
                             '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
 
                         if (_currentPage == 0) {
-                          bottomController.isCheckedIn.value = true;
-                          bottomController.checkInTime.value = time;
-                          bottomController.isCheckedOut.value = false;
+                          final success =
+                              await ApiService.updateAttendanceStatus("출근");
+                          print('🔁 출근 요청 결과: $success');
+                          if (success) {
+                            bottomController.isCheckedIn.value = true;
+                            bottomController.checkInTime.value = time;
+                            bottomController.isCheckedOut.value = false;
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('출근 상태 변경 실패')),
+                            );
+                          }
                         } else {
                           if (bottomController.isCheckedIn.value) {
-                            bottomController.isCheckedOut.value = true;
-                            bottomController.checkOutTime.value = time;
-                            setState(() => showSurvey = true);
+                            final success =
+                                await ApiService.updateAttendanceStatus("퇴근");
+                            print('🔁 퇴근 요청 결과: $success');
+                            if (success) {
+                              bottomController.isCheckedOut.value = true;
+                              bottomController.checkOutTime.value = time;
+                              setState(() => showSurvey = true);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('퇴근 상태 변경 실패')),
+                              );
+                            }
                           }
                         }
                       },
+
                       child: Container(
                         height: 90,
                         decoration: BoxDecoration(
@@ -380,10 +404,10 @@ class _HomePageState extends State<HomePage> {
                               child: Icon(Icons.chevron_right, size: 28),
                             ),
 
+                            // home.dart
                             onTap: () {
-                              final controller =
-                                  Get.find<BottomNavController>();
-                              controller.goToDeliveryDetail(area);
+                              Get.find<BottomNavController>()
+                                  .goToDeliveryDetail(area);
                             },
                           ),
                         );

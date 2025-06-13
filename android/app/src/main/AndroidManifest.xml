@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+
     <!-- 인터넷 권한 -->
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -8,14 +9,28 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.BODY_SENSORS" />
 
+
+    <!--카메라-->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+
     <!-- (선택) Android 10 이상에서 백그라운드 위치 필요 시 -->
     <!-- <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" /> -->
 
     <application
         android:label="shimbox_app"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:usesCleartextTraffic="true" 
+        android:hardwareAccelerated="true"
+>
 
         <activity
+            android:requestLegacyExternalStorage="true"
             android:name="com.shimbox.app.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
@@ -28,17 +43,24 @@
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme" />
-
+                
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                
             </intent-filter>
         </activity>
 
-        <!-- Flutter plugin -->
+        <!-- Flutter plugin용 -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Naver Map Client ID -->
+        <meta-data
+            android:name="com.naver.maps.map.CLIENT_ID"
+            android:value="5rjrszwqdb" />
+
     </application>
 
     <!-- Flutter 텍스트 처리용 쿼리 -->
@@ -47,5 +69,11 @@
             <action android:name="android.intent.action.PROCESS_TEXT" />
             <data android:mimeType="text/plain" />
         </intent>
+        <!-- Naver -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="nmap" />
+        </intent>
+        <package android:name="com.nhn.android.nmap" />
     </queries>
 </manifest>

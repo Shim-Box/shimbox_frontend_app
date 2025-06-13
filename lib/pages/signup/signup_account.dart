@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../models/signup_data.dart';
+import '../../utils/database.dart';
 
 class SignupAccountPage extends StatefulWidget {
   const SignupAccountPage({super.key});
@@ -25,6 +27,14 @@ class _SignupAccountPageState extends State<SignupAccountPage> {
       _passwordController.text.isNotEmpty &&
       _passwordController.text == _confirmPasswordController.text;
 
+  bool get isPasswordValid => _passwordController.text.length >= 8;
+
+  bool get isEmailValid {
+    final email = _idController.text.trim();
+    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+    return emailRegex.hasMatch(email);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +51,32 @@ class _SignupAccountPageState extends State<SignupAccountPage> {
     _heightController.dispose();
     _weightController.dispose();
     super.dispose();
+  }
+
+  // 데이터 저장 및 이동 메서드
+  void _submitAccount() {
+    signupData.email = _idController.text.trim(); // 아이디를 이메일 필드에 저장 (필요에 따라 조정)
+    signupData.password = _passwordController.text.trim();
+    signupData.residence = _addressController.text.trim();
+    signupData.height = int.tryParse(_heightController.text.trim());
+    signupData.weight = int.tryParse(_weightController.text.trim());
+
+    // 유효성 검사 (예: 빈 값 체크)
+    if (_idController.text.isEmpty ||
+        !isEmailValid ||
+        _passwordController.text.isEmpty ||
+        !isPasswordValid ||
+        _addressController.text.isEmpty ||
+        _heightController.text.isEmpty ||
+        _weightController.text.isEmpty ||
+        !isPasswordMatch) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('모든 필드를 올바르게 입력해주세요.')));
+      return;
+    }
+
+    Navigator.pushNamed(context, '/signup_license');
   }
 
   @override
@@ -80,18 +116,31 @@ class _SignupAccountPageState extends State<SignupAccountPage> {
               ),
               const SizedBox(height: 24),
 
-              // 아이디
-              const Text('아이디', style: TextStyle(fontWeight: FontWeight.bold)),
+              // email
+              const Text(
+                'email',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               TextField(
                 controller: _idController,
+                onChanged: (_) => setState(() {}), // 상태 갱신
                 decoration: const InputDecoration(
-                  hintText: '아이디 입력',
+                  hintText: 'email 입력',
                   hintStyle: hintStyle,
                   enabledBorder: underlineBorder,
                   focusedBorder: underlineBorder,
                   contentPadding: inputPadding,
                 ),
               ),
+              // 이메일 유효성 메시지
+              if (_idController.text.isNotEmpty && !isEmailValid)
+                const Padding(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Text(
+                    'email 형식이 틀립니다',
+                    style: TextStyle(fontSize: 12, color: Colors.red),
+                  ),
+                ),
               const SizedBox(height: 32),
 
               // 비밀번호
@@ -99,6 +148,7 @@ class _SignupAccountPageState extends State<SignupAccountPage> {
               TextField(
                 controller: _passwordController,
                 obscureText: true,
+                onChanged: (_) => setState(() {}), // 상태 갱신
                 decoration: const InputDecoration(
                   hintText: '비밀번호 입력',
                   hintStyle: hintStyle,
@@ -107,6 +157,15 @@ class _SignupAccountPageState extends State<SignupAccountPage> {
                   contentPadding: inputPadding,
                 ),
               ),
+              // 비밀번호 유효성 메시지
+              if (_passwordController.text.isNotEmpty && !isPasswordValid)
+                const Padding(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Text(
+                    '비밀번호는 8자 이상이어야 합니다',
+                    style: TextStyle(fontSize: 12, color: Colors.red),
+                  ),
+                ),
               const SizedBox(height: 32),
 
               // 비밀번호 확인
@@ -187,6 +246,7 @@ class _SignupAccountPageState extends State<SignupAccountPage> {
                   ),
                 ],
               ),
+
               const SizedBox(height: 32),
 
               // 키
@@ -248,9 +308,7 @@ class _SignupAccountPageState extends State<SignupAccountPage> {
           width: double.infinity,
           height: 60,
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/signup_license');
-            },
+            onPressed: _submitAccount,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF54D2A7),
               shape: RoundedRectangleBorder(

@@ -31,17 +31,20 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # db
+  sqflite: ^2.3.0
+  path: ^1.8.0
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   get: ^4.6.5
   flutter_svg: ^2.0.7
   intl: ^0.18.1
- 
+
   # 추가
   permission_handler: ^11.0.1
   shared_preferences: ^2.3.0
-  
+
   # Google Fit 추가
   googleapis: ^11.0.0
   googleapis_auth: ^1.4.0
@@ -49,10 +52,26 @@ dependencies:
   http: ^0.13.6
 
   #firebase
-  firebase_core: ^2.30.0
+  firebase_core: ^2.32.0
   firebase_auth: ^4.17.4
   firebase_analytics: ^10.10.4
+  firebase_storage: ^11.0.0
 
+  # Map
+  # GitHub에서 직접 불러오기
+  naver_map_plugin:
+    path: local_packages/naver_map_plugin/naver_map_plugin-d6029c020e13c926ff5f94b445b4f65abb48b85f
+
+  flutter_naver_map: ^1.1.0
+  geocoding: ^2.1.0
+  location: ^5.0.3
+  android_intent_plus: ^4.0.1
+  url_launcher: ^6.2.5
+  image_picker: ^1.1.2
+
+  webview_flutter: ^4.2.2
+  geolocator: ^10.1.0
+  webview_flutter_android: ^3.10.2
 
 dev_dependencies:
   flutter_test:
@@ -89,6 +108,8 @@ flutter:
     - assets/images/wearable/
     - assets/images/home/
     - assets/images/delivery/
+    - assets/images/map/
+    - assets/map.html
 
   # To add assets to your application, add an assets section, like this:
   # assets:

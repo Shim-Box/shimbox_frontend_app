@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimbox_app/controllers/bottom_nav_controller.dart';
+import 'package:shimbox_app/pages/main_scaffold.dart';
 import 'package:shimbox_app/pages/signup/signup_detail.dart';
 import 'package:shimbox_app/pages/signup/signup_experience.dart';
 import 'package:shimbox_app/pages/signup/signup_health.dart';
@@ -25,14 +26,13 @@ import 'pages/signup/signup_waiting.dart';
 import 'pages/health/health_status.dart';
 import 'pages/wearable/wearable.dart';
 import 'pages/home/home.dart';
+import 'package:flutter_naver_map/flutter_naver_map.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // 필수!
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const MyApp());
-  // Get.put(BottomNavController());
+  WidgetsFlutterBinding.ensureInitialized(); // 한 번만 호출!
+  await Firebase.initializeApp(); // Firebase 초기화
 
-  // runApp(GetMaterialApp(debugShowCheckedModeBanner: false, home: RootPage()));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -58,7 +58,8 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/home', page: () => RootPage()),
         GetPage(name: '/health_status', page: () => HealthPage()),
         GetPage(name: '/wearable', page: () => WearablePage()),
-        GetPage(name: '/main', page: () => HomePage()),
+        // GetPage(name: '/main', page: () => HomePage()),
+        GetPage(name: '/main', page: () => MainScaffold()),
       ],
     );
   }
