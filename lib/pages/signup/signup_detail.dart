@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../models/signup_data.dart';
+import '../../utils/database.dart';
 
 class ExperienceDetailPage extends StatefulWidget {
   const ExperienceDetailPage({super.key});
@@ -47,6 +49,40 @@ class _ExperienceDetailPageState extends State<ExperienceDetailPage> {
         ),
       ),
     );
+  }
+
+  // 데이터 저장 및 이동 메서드
+  void _submitExperienceDetail() {
+    // 평균 근무 시간 저장 (텍스트로 매핑)
+    switch (_selectedHours) {
+      case 0:
+        signupData.averageWorking = '4~6시간';
+        break;
+      case 1:
+        signupData.averageWorking = '6~8시간';
+        break;
+      case 2:
+        signupData.averageWorking = '8시간 이상';
+        break;
+    }
+
+    // 평균 배송 횟수 저장 (텍스트로 매핑)
+    switch (_selectedDeliveries) {
+      case 0:
+        signupData.averageDelivery = '100건 이하';
+        break;
+      case 1:
+        signupData.averageDelivery = '101~200건';
+        break;
+      case 2:
+        signupData.averageDelivery = '201~300건';
+        break;
+      case 3:
+        signupData.averageDelivery = '300건 이상';
+        break;
+    }
+
+    Navigator.pushNamed(context, '/signup_health');
   }
 
   @override
@@ -158,11 +194,15 @@ class _ExperienceDetailPageState extends State<ExperienceDetailPage> {
           height: 60,
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/signup_health');
-            },
+            onPressed:
+                _selectedHours != null && _selectedDeliveries != null
+                    ? _submitExperienceDetail
+                    : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF54D2A7),
+              backgroundColor:
+                  _selectedHours != null && _selectedDeliveries != null
+                      ? const Color(0xFF54D2A7)
+                      : const Color(0xFFD3D3D3),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),

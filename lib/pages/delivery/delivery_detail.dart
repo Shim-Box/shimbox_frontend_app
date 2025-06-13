@@ -4,8 +4,10 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:shimbox_app/controllers/bottom_nav_controller.dart';
 import 'package:shimbox_app/utils/navigation_helper.dart';
-import 'package:shimbox_app/utils/sms_helper.dart'; // ✅ 문자 전송 함수 임포트
 import 'package:shimbox_app/pages/delivery/photo_capture_modal.dart'; // ✅ 사진 모달 임포트
+import 'package:url_launcher/url_launcher.dart';
+import 'package:shimbox_app/utils/firebase_uploader.dart';
+import '../../utils/api_service.dart';
 
 class DeliveryDetailPage extends StatefulWidget {
   final Map<String, dynamic> area;
@@ -26,24 +28,28 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
 
   final List<Map<String, dynamic>> deliveryAreas = [
     {
+      'id': 1,
       'name': '노원구 상계동',
       'total': 20,
       'address': '서울특별시 노원구 동일로 1345',
       'phone': '01093767255',
     },
     {
+      'id': 1,
       'name': '강서구 방화동',
       'total': 30,
       'address': '서울특별시 강서구 금낭화로 168',
       'phone': '01093767255',
     },
     {
+      'id': 1,
       'name': '강남구 삼성동',
       'total': 15,
       'address': '서울특별시 강남구 봉은사로 524',
       'phone': '01093767255',
     },
     {
+      'id': 1,
       'name': '송파구 잠실동',
       'total': 25,
       'address': '서울특별시 송파구 올림픽로 300',
@@ -284,19 +290,54 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
             builder:
                 (_) => PhotoCaptureModal(
                   phoneNumber: item['phone'],
-                  onSend: (image) {
-                    // 문자 전송은 현재 보류, 아래는 추후 서버 연동용
-                    // await sendSms(item['phone'], '택배 도착했습니다. 문 앞에 두었습니다.');
-                    // Navigator.of(context).pop(true);
+                  onSend: (image) async {
+                    final fileName =
+                        'delivery_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
-                    // 상태 갱신: 배송 완료 처리
-                    setState(() {
-                      deliveryStatus[areaIndex][i] = 2;
+                    // ✅ Firebase에 이미지 업로드
+                    final url = await FirebaseUploader.uploadImageToFirebase(
+                      image,
+                      fileName,
+                      folder: 'deliveries',
+                    );
+
+                    if (url != null) {
+                      // ✅ 문자 내용 구성
+                      final smsText = '''
+배송이 완료되었습니다.
+사진 확인: $url
+''';
+
+                      final uri = Uri.parse(
+                        'sms:${item['phone']}?body=${Uri.encodeComponent(smsText)}',
+                      );
+
+                      // ✅ 문자 앱 열기
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('문자 앱을 열 수 없습니다.')),
+                        );
+                      }
+
+                      // ✅ 상태 갱신
+                      setState(() {
+                        deliveryStatus[areaIndex][i] = 2;
+                      });
+
+                      final ctrl = Get.find<BottomNavController>();
+                      ctrl.selectedArea.value = widget.area;
+                      ctrl.pageIndex.value = 3;
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Firebase 업로드 실패')),
+                      );
+                    }
+                    await ApiService.post('/api/v1/driver/delivery/image', {
+                      'productId': item['id'],
+                      'imageUrl': url?.trim(),
                     });
-                    // 다시 area를 유지시켜서 pageIndex == 3 상태를 보장
-                    final ctrl = Get.find<BottomNavController>();
-                    ctrl.selectedArea.value = widget.area;
-                    ctrl.pageIndex.value = 3;
                   },
                 ),
           );

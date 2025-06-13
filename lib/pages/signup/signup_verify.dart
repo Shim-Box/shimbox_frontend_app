@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../models/signup_data.dart';
+import '../../utils/database.dart';
 
 class SignupVerifyPage extends StatefulWidget {
   const SignupVerifyPage({super.key});
@@ -15,7 +17,7 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
   final _phoneController = TextEditingController();
   final _codeController = TextEditingController();
 
-  // String? _verificationId;
+  String? _verificationId;
   bool _isVerified = false;
   bool _codeSent = false;
 
@@ -54,8 +56,7 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  // --- 인증 로직 --- (주석 처리됨)
-  /*
+  // --- 인증 로직 ---
   Future<void> _sendCode() async {
     final formatted = formatPhoneNumber(_phoneController.text);
     if (formatted == null) {
@@ -117,7 +118,14 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
       showSnack('인증 실패: ${e.toString()}');
     }
   }
-*/
+
+  // --- 새로 추가: 데이터 저장 및 이동 ---
+  void _submitVerification() {
+    signupData.name = _nameController.text.trim();
+    signupData.phoneNumber = _phoneController.text.trim();
+    signupData.birth = _rrnFrontController.text.trim();
+    Navigator.pushNamed(context, '/signup_account');
+  }
 
   // --- UI ---
   @override
@@ -287,11 +295,19 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                   ),
                   const SizedBox(width: 8),
                   OutlinedButton(
-                    onPressed: null, // 인증 요청 비활성화
+                    onPressed: isPhoneValid ? _sendCode : null,
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(100, 40),
-                      foregroundColor: const Color(0xFFD3D3D3),
-                      side: const BorderSide(color: Color(0xFFD3D3D3)),
+                      foregroundColor:
+                          isPhoneValid
+                              ? const Color(0xFF54D2A7)
+                              : const Color(0xFFD3D3D3),
+                      side: BorderSide(
+                        color:
+                            isPhoneValid
+                                ? const Color(0xFF54D2A7)
+                                : const Color(0xFFD3D3D3),
+                      ),
                     ),
                     child: const Text('인증요청', style: TextStyle(fontSize: 13)),
                   ),
@@ -325,11 +341,17 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
-                      onPressed: null, // 인증 확인 비활성화
+                      onPressed: isCodeValid ? _verifyCode : null,
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(100, 40),
-                        backgroundColor: Colors.transparent,
-                        foregroundColor: const Color(0xFFD3D3D3),
+                        backgroundColor:
+                            isCodeValid
+                                ? const Color(0xFF54D2A7)
+                                : Colors.transparent,
+                        foregroundColor:
+                            isCodeValid
+                                ? Colors.white
+                                : const Color(0xFFD3D3D3),
                       ),
                       child: const Text('확인', style: TextStyle(fontSize: 13)),
                     ),
@@ -346,12 +368,12 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
           width: double.infinity,
           height: 60,
           child: ElevatedButton(
-            onPressed: () {
-              // 👉 인증 생략: 바로 다음 화면으로 이동
-              Navigator.pushNamed(context, '/signup_account');
-            },
+            onPressed: _isVerified ? _submitVerification : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF54D2A7),
+              backgroundColor:
+                  _isVerified
+                      ? const Color(0xFF54D2A7)
+                      : const Color(0xFFD3D3D3),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),

@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:get/get.dart';
 import 'package:shimbox_app/controllers/bottom_nav_controller.dart';
-// import 'package:shimbox_app/utils/sms_helper.dart'; // 문자 전송 함수 (추후 API 연동 시 사용 예정)
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../utils/api_service.dart';
+import 'package:shimbox_app/utils/firebase_uploader.dart'; // ✅ FirebaseUploader 클래스
+import 'package:url_launcher/url_launcher.dart'; // ✅ 문자 전송용
 
 class PhotoCaptureModal extends StatefulWidget {
   final String phoneNumber;
@@ -73,18 +75,13 @@ class _PhotoCaptureModalState extends State<PhotoCaptureModal> {
                         ),
                       ),
                       GestureDetector(
-                        // ✅ 모달 닫기 및 딜리버리 디테일로 복귀
                         onTap: () {
-                          // 문자 전송은 현재 보류, 아래는 추후 서버 연동용
-                          // await sendSms(widget.phoneNumber, '택배 도착했습니다. 문 앞에 두었습니다.');
-                          // await sendImageToServer(_image); // 예시
-
-                          widget.onSend(_image!); // 상위에 전달
-                          Navigator.of(
-                            context,
-                            rootNavigator: false,
-                          ).pop(); // ✅ 모달만 닫기
+                          if (_image != null) {
+                            widget.onSend(_image!);
+                            Navigator.of(context, rootNavigator: false).pop();
+                          }
                         },
+
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 14),

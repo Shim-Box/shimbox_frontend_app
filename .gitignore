@@ -1,3 +1,8 @@
+# 빌드 결과물 무시
+/build
+*.apk
+*.ipa
+
 # Miscellaneous
 *.class
 *.log

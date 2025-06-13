@@ -8,8 +8,12 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.BODY_SENSORS" />
+
+
     <!--카메라-->
     <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
@@ -47,10 +51,16 @@
             </intent-filter>
         </activity>
 
-        <!-- Flutter plugin -->
+        <!-- Flutter plugin용 -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Naver Map Client ID -->
+        <meta-data
+            android:name="com.naver.maps.map.CLIENT_ID"
+            android:value="5rjrszwqdb" />
+
     </application>
 
     <!-- Flutter 텍스트 처리용 쿼리 -->

@@ -34,12 +34,14 @@
         // center: new naver.maps.LatLng(37.498, 126.866),
         center: new naver.maps.LatLng(37.7749, -122.4194), // 샌프란시스코
         zoom: 12,
+        minZoom: 5, // 최소 줌 레벨 (원하는 만큼 낮춰도 됨)
+        maxZoom: 21, // 최대 줌 레벨 (네이버 맵은 21까지 지원)
         zoomControl: true,
         zoomControlOptions: {
           position: naver.maps.Position.TOP_RIGHT,
         },
-        disableDoubleClickZoom: false, // 더블탭 확대 허용
-        scrollWheel: true, // 마우스 휠 허용
+        disableDoubleClickZoom: false,
+        scrollWheel: true,
         draggable: true,
       });
 
