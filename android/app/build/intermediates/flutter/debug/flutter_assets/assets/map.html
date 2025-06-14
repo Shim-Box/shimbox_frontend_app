@@ -2,168 +2,21 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=3.0"
-    />
-
-    <title>경로 테스트 (경유지 포함)</title>
-    <script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=5rjrszwqdb"></script>
-    <style>
-      html,
-      body {
-        height: 100%;
-        margin: 0;
-        overflow: hidden;
-        -webkit-overflow-scrolling: touch;
-        touch-action: auto;
-        overscroll-behavior: contain;
-      }
-      #map {
-        width: 100%;
-        height: 100%;
-        touch-action: auto;
-        overscroll-behavior: contain;
-      }
-    </style>
+    <title>주소 검색</title>
+    <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
   </head>
-  <body>
-    <div id="map"></div>
+  <body style="margin: 0">
+    <div id="wrap" style="width: 100%; height: 100vh"></div>
+
     <script>
-      const map = new naver.maps.Map("map", {
-        // center: new naver.maps.LatLng(37.498, 126.866),
-        center: new naver.maps.LatLng(37.7749, -122.4194), // 샌프란시스코
-        zoom: 12,
-        minZoom: 5, // 최소 줌 레벨 (원하는 만큼 낮춰도 됨)
-        maxZoom: 21, // 최대 줌 레벨 (네이버 맵은 21까지 지원)
-        zoomControl: true,
-        zoomControlOptions: {
-          position: naver.maps.Position.TOP_RIGHT,
-        },
-        disableDoubleClickZoom: false,
-        scrollWheel: true,
-        draggable: true,
-      });
-
-      // const coords = [
-      //   { name: "고척도서관", lat: 37.49845, lng: 126.8638 },
-      //   { name: "경유지1", lat: 37.5035, lng: 126.8752 },
-      //   { name: "경유지2", lat: 37.5067, lng: 126.8823 },
-      //   { name: "신도림역", lat: 37.50836, lng: 126.8911 },
-      // ];
-
-      //샌프란시스코 도심
-      const coords = [
-        { name: "San Francisco City Hall", lat: 37.7790262, lng: -122.419906 },
-        { name: "Union Square", lat: 37.787994, lng: -122.407437 },
-        { name: "Ferry Building", lat: 37.7955, lng: -122.3937 },
-        { name: "Pier 39", lat: 37.8087, lng: -122.4098 },
-        { name: "Golden Gate Bridge", lat: 37.8199, lng: -122.4783 },
-      ];
-
-      coords.forEach((point) => {
-        new naver.maps.Marker({
-          position: new naver.maps.LatLng(point.lat, point.lng),
-          map,
-          title: point.name,
-        });
-      });
-
-      async function drawGoogleRoute() {
-        const origin = coords[0];
-        const destination = coords[coords.length - 1];
-
-        const waypoints = coords
-          .slice(1, coords.length - 1)
-          .map((p) => `via:${p.lat},${p.lng}`)
-          .join("|");
-
-        const url = `https://us-central1-shimbox.cloudfunctions.net/getDirections?origin=${origin.lat},${origin.lng}&destination=${destination.lat},${destination.lng}&waypoints=${waypoints}&mode=driving`;
-
-        console.log("요청 URL 👉", url);
-
-        try {
-          const res = await fetch(url);
-          const data = await res.json();
-          console.log("📦 응답 데이터:", data);
-
-          if (!data.routes || !data.routes[0]) {
-            alert("경로를 불러오지 못했습니다.");
-            return;
+      new daum.Postcode({
+        oncomplete: function (data) {
+          var addr = data.roadAddress;
+          if (window.AddrChannel) {
+            AddrChannel.postMessage(addr); // ✅ Flutter로 주소 전달
           }
-
-          const encoded = data.routes[0].overview_polyline.points;
-          const pathCoords = decodePolyline(encoded);
-          const path = pathCoords.map(
-            (c) => new naver.maps.LatLng(c.lat, c.lng)
-          );
-
-          new naver.maps.Polyline({
-            path,
-            strokeColor: "#FF4E00",
-            strokeWeight: 5,
-            strokeOpacity: 0.9,
-            map,
-          });
-
-          const bounds = new naver.maps.LatLngBounds();
-          path.forEach((p) => bounds.extend(p));
-          // map.fitBounds(bounds);
-        } catch (err) {
-          console.error("경로 요청 오류:", err);
-        }
-      }
-
-      function decodePolyline(encoded) {
-        let points = [];
-        let index = 0,
-          lat = 0,
-          lng = 0;
-
-        while (index < encoded.length) {
-          let b,
-            shift = 0,
-            result = 0;
-          do {
-            b = encoded.charCodeAt(index++) - 63;
-            result |= (b & 0x1f) << shift;
-            shift += 5;
-          } while (b >= 0x20);
-          let dlat = result & 1 ? ~(result >> 1) : result >> 1;
-          lat += dlat;
-
-          shift = 0;
-          result = 0;
-          do {
-            b = encoded.charCodeAt(index++) - 63;
-            result |= (b & 0x1f) << shift;
-            shift += 5;
-          } while (b >= 0x20);
-          let dlng = result & 1 ? ~(result >> 1) : result >> 1;
-          lng += dlng;
-
-          points.push({ lat: lat / 1e5, lng: lng / 1e5 });
-        }
-        return points;
-      }
-
-      drawGoogleRoute();
-      function moveToLocation(lat, lng, zoom) {
-        const location = new naver.maps.LatLng(lat, lng);
-        map.setZoom(zoom || 17);
-        map.setCenter(location);
-
-        new naver.maps.Marker({
-          position: location,
-          map: map,
-          title: "현재 위치",
-          icon: {
-            content:
-              '<div style="background: #1A73E9; border-radius: 50%; width: 12px; height: 12px; border: 2px solid white;"></div>',
-            anchor: new naver.maps.Point(6, 6),
-          },
-        });
-      }
+        },
+      }).embed(document.getElementById("wrap"));
     </script>
   </body>
 </html>

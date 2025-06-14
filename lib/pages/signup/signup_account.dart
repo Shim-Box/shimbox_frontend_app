@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/signup_data.dart';
 import '../../utils/database.dart';
+import 'daum_postcode_screen.dart';
 
 class SignupAccountPage extends StatefulWidget {
   const SignupAccountPage({super.key});
@@ -229,6 +230,22 @@ class _SignupAccountPageState extends State<SignupAccountPage> {
                   Expanded(
                     child: TextField(
                       controller: _addressController,
+                      readOnly: true,
+                      onTap: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const DaumPostcodeScreen(),
+                          ),
+                        );
+
+                        if (result != null && result is String) {
+                          setState(() {
+                            _addressController.text = result;
+                          });
+                        }
+                      },
+
                       decoration: const InputDecoration(
                         hintText: '서울 성북구 삼양로',
                         hintStyle: hintStyle,

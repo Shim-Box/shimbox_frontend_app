@@ -27,6 +27,7 @@ import 'pages/health/health_status.dart';
 import 'pages/wearable/wearable.dart';
 import 'pages/home/home.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // 한 번만 호출!

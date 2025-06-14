@@ -67,6 +67,7 @@ flutter {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
+    implementation ("androidx.fragment:fragment:1.3.6")
 
     // ✅ Firebase BOM
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
