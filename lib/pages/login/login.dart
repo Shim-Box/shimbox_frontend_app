@@ -25,10 +25,11 @@ class _LoginPageState extends State<LoginPage> {
     print('서버 응답값: $result');
 
     if (result != null) {
-      final data = result['data'];
+      final data = result['data']; // ✅ 먼저 정의
 
-      // 승인 여부 확인
-      if (data['approvalStatus'] != true) {
+      final approval = data['approvalStatus']?.toString();
+
+      if (approval != '1') {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('❗승인되지 않은 계정입니다. 관리자에게 문의하세요.')),
         );

@@ -10,7 +10,7 @@
   },
   "cxxBuildFolder": "C:\\shimbox_frontend_app\\android\\app\\.cxx\\Debug\\124g3571\\x86",
   "soFolder": "C:\\shimbox_frontend_app\\android\\app\\build\\intermediates\\cxx\\Debug\\124g3571\\obj\\x86",
-  "soRepublishFolder": "C:\\shimbox_frontend_app\\android\\app\\build\\intermediates\\cmake\\profile\\obj\\x86",
+  "soRepublishFolder": "C:\\shimbox_frontend_app\\android\\app\\build\\intermediates\\cmake\\debug\\obj\\x86",
   "abiPlatformVersion": 23,
   "cmake": {
     "effectiveConfiguration": {
@@ -25,7 +25,7 @@
     ],
     "cFlagsList": [],
     "cppFlagsList": [],
-    "variantName": "profile",
+    "variantName": "debug",
     "isDebuggableEnabled": true,
     "validAbiList": [
       "armeabi-v7a",
