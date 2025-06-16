@@ -19,17 +19,21 @@ class MainActivity : FlutterFragmentActivity() {
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "moveToCurrentLocation" -> {
-                        TMapController.moveToCurrentLocation()
+                        // context 전달을 위해 this 사용
+                        TMapController.moveToCurrentLocation(this)
                         result.success(null)
                     }
+
                     "enableTracking" -> {
                         TMapController.enableTracking()
                         result.success(null)
                     }
+
                     "drawOptimizedRoute" -> {
                         TMapController.drawOptimizedRoute()
                         result.success(null)
                     }
+
                     else -> result.notImplemented()
                 }
             }

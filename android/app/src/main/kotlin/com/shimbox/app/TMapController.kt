@@ -1,5 +1,8 @@
 package com.shimbox.app
 
+import android.content.Context
+import android.util.Log
+import com.google.android.gms.location.LocationServices
 import com.skt.tmap.TMapData
 import com.skt.tmap.TMapPoint
 import com.skt.tmap.TMapView
@@ -8,9 +11,28 @@ import com.skt.tmap.overlay.TMapPolyLine
 object TMapController {
     lateinit var tMapView: TMapView
 
-    fun moveToCurrentLocation() {
-        val location = tMapView.locationPoint
-        tMapView.setCenterPoint(location.longitude, location.latitude)
+    fun moveToCurrentLocation(context: Context) {
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+        try {
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location ->
+                    if (location != null) {
+                        val lat = location.latitude
+                        val lon = location.longitude
+
+                        Log.d("TMapController", "📍 정확 위치: lat=$lat, lon=$lon")
+                        tMapView.setCenterPoint(lon, lat)
+                    } else {
+                        Log.w("TMapController", "⚠️ 위치를 가져올 수 없습니다 (null)")
+                    }
+                }
+                .addOnFailureListener {
+                    Log.e("TMapController", "❌ 위치 가져오기 실패: ${it.message}")
+                }
+        } catch (e: SecurityException) {
+            Log.e("TMapController", "❌ 위치 권한 없음: ${e.message}")
+        }
     }
 
     fun enableTracking() {
@@ -24,7 +46,6 @@ object TMapController {
     fun drawOptimizedRoute() {
         val tMapData = TMapData()
 
-        // 예시 더미 데이터: 강남 → 잠실 → 송파
         val points = arrayListOf(
             TMapPoint(37.4979, 127.0276), // 강남
             TMapPoint(37.5111, 127.0980), // 잠실
@@ -45,7 +66,6 @@ object TMapController {
                 override fun onFindPathDataWithType(polyline: TMapPolyLine) {
                     tMapView.addTMapPolyLine(polyline)
                 }
-
             }
         )
     }

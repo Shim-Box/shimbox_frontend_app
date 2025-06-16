@@ -95,4 +95,6 @@ dependencies {
     implementation(files("libs/vsm-tmap-sdk-v2-android-1.7.251.aar"))
     implementation("com.google.android.material:material:1.11.0")
 
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+
 }

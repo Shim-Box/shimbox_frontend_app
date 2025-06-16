@@ -23,7 +23,7 @@ class TMapNativeView(context: Context) : PlatformView {
 
             // 지도 준비 완료 후 설정
             setOnMapReadyListener {
-                setTrackingMode(false)
+                setTrackingMode(true)
                 setCompassMode(true)
 
                 // 현재 위치 중심으로 이동
@@ -59,6 +59,10 @@ class TMapNativeView(context: Context) : PlatformView {
                     MotionEvent.ACTION_UP -> Log.d("TMapGesture", "사용자 손 떼기")
                 }
                 false
+            }
+
+            post {
+                forceSurfaceViewMediaOverlay(this)
             }
         }
 

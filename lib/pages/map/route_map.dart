@@ -6,6 +6,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+// 생략된 import는 그대로 유지
+
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
 
@@ -23,25 +25,18 @@ class _MapPageState extends State<MapPage> {
   }
 
   Future<void> _requestPermissions() async {
-    Map<Permission, PermissionStatus> statuses =
-        await [
-          Permission.location,
-          Permission.locationWhenInUse,
-          Permission.locationAlways,
-        ].request();
-
-    if (statuses[Permission.location] != PermissionStatus.granted &&
-        statuses[Permission.locationWhenInUse] != PermissionStatus.granted &&
-        statuses[Permission.locationAlways] != PermissionStatus.granted) {
-      print('❗ 위치 권한이 모두 거부되었습니다.');
-    }
+    await [
+      Permission.location,
+      Permission.locationWhenInUse,
+      Permission.locationAlways,
+    ].request();
   }
 
   Future<void> _moveToCurrentLocation() async {
     try {
       await _channel.invokeMethod('moveToCurrentLocation');
     } catch (e) {
-      print('❗ 위치 이동 실패: \$e');
+      print('❗ 위치 이동 실패: $e');
     }
   }
 
@@ -49,7 +44,7 @@ class _MapPageState extends State<MapPage> {
     try {
       await _channel.invokeMethod('drawOptimizedRoute');
     } catch (e) {
-      print('❗ 경로 그리기 실패: \$e');
+      print('❗ 경로 그리기 실패: $e');
     }
   }
 
@@ -58,15 +53,18 @@ class _MapPageState extends State<MapPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // ✅ 지도 뷰 (맨 아래)
+          // ✅ Native 지도 View
           Positioned.fill(
             child: PlatformViewLink(
               viewType: 'tmap-native-view',
               surfaceFactory: (context, controller) {
                 return AndroidViewSurface(
                   controller: controller as AndroidViewController,
-                  gestureRecognizers:
-                      const <Factory<OneSequenceGestureRecognizer>>{}.toSet(),
+                  gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                    Factory<OneSequenceGestureRecognizer>(
+                      () => EagerGestureRecognizer(),
+                    ),
+                  },
                   hitTestBehavior: PlatformViewHitTestBehavior.opaque,
                 );
               },
@@ -81,7 +79,7 @@ class _MapPageState extends State<MapPage> {
             ),
           ),
 
-          // ✅ 지도 위에 오버레이 UI
+          // ✅ 지도 위 오버레이 UI
           Positioned(
             bottom: 20,
             left: 16,
