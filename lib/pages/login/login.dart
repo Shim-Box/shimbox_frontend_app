@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shimbox_app/models/login_data.dart';
+import 'package:shimbox_app/models/login_response.dart' as model;
 import 'package:shimbox_app/utils/api_service.dart';
 import '../root/root.dart';
-import 'package:shimbox_app/models/test_user_data.dart';
+import 'package:shimbox_app/models/test_user_data.dart'; // 🔄 정적 저장용 UserData
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,15 +22,13 @@ class _LoginPageState extends State<LoginPage> {
       password: _passwordController.text.trim(),
     );
 
-    final result = await ApiService.loginUser(loginData);
+    final model.LoginResponse? result = await ApiService.loginUser(loginData);
     print('서버 응답값: $result');
 
     if (result != null) {
-      final data = result['data']; // ✅ 먼저 정의
+      final userData = result.data;
 
-      final approval = data['approvalStatus']?.toString();
-
-      if (approval != '1') {
+      if (!userData.approved) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('❗승인되지 않은 계정입니다. 관리자에게 문의하세요.')),
         );
@@ -37,8 +36,8 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       // 승인된 사용자일 경우 정보 저장
-      UserData.name = data['name'];
-      UserData.token = data['accessToken'];
+      UserData.name = userData.name;
+      UserData.token = userData.accessToken;
       UserData.email = loginData.email;
 
       print('✅ 저장된 사용자 이름: ${UserData.name}');

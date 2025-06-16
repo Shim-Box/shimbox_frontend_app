@@ -3,21 +3,19 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/signup_data.dart';
 import '../models/login_data.dart';
-import '../models/test_user_data.dart';
+import '../models/login_response.dart'; // ✅ LoginResponse 사용 가능하게 함
+import '../models/test_user_data.dart' as localUser; // ✅ 이름 충돌 방지용
 
 class ApiService {
-  // ✅ 외부에서 쓸 수 있는 POST 메서드 (내부 _post 호출)
   static Future<bool> post(String endpoint, Map<String, dynamic> body) {
     return _post(endpoint, body);
   }
 
-  // 사용자 회원가입
   static Future<bool> registerUser(SignupData data) {
     return _post('/api/v1/auth/save', data.toJson());
   }
 
-  // 로그인
-  static Future<Map<String, dynamic>?> loginUser(LoginData data) async {
+  static Future<LoginResponse?> loginUser(LoginData data) async {
     final url = Uri.parse('http://116.39.208.72:26443/api/v1/auth/login');
 
     final response = await http.post(
@@ -27,24 +25,17 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(
-        utf8.decode(response.bodyBytes),
-      ); // ✅ UTF-8 decode
-      // final decoded = jsonDecode(response.body);
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
       print('✅ 로그인 응답: $decoded');
-      return decoded;
+      return LoginResponse.fromJson(decoded);
     } else {
       print('❌ 로그인 실패: ${response.statusCode}, ${response.body}');
       return null;
     }
   }
 
-  // ✅ 운전면허 이미지 업로드
   static Future<String?> uploadLicenseImage(File file) async {
-    final url = Uri.parse(
-      'http://116.39.208.72:26443/api/v1/upload/license',
-    ); // 서버가 받아주는 업로드 API
-
+    final url = Uri.parse('http://116.39.208.72:26443/api/v1/upload/license');
     final request = http.MultipartRequest('POST', url);
     request.files.add(await http.MultipartFile.fromPath('file', file.path));
 
@@ -55,7 +46,7 @@ class ApiService {
         final body = await response.stream.bytesToString();
         final result = jsonDecode(body);
         print('✅ 이미지 업로드 성공: ${result['url']}');
-        return result['url']; // 서버가 업로드된 파일 URL을 반환한다고 가정
+        return result['url'];
       } else {
         print('❌ 이미지 업로드 실패: ${response.statusCode}');
         return null;
@@ -66,7 +57,6 @@ class ApiService {
     }
   }
 
-  // 공통 POST 요청 처리
   static Future<bool> _post(String endpoint, Map<String, dynamic> body) async {
     final baseUrl = 'http://116.39.208.72:26443';
     final url = Uri.parse('$baseUrl$endpoint');
@@ -91,7 +81,6 @@ class ApiService {
     }
   }
 
-  // ✅ 배송 사진 파일 전송 (서버가 문자 전송 포함)
   static Future<bool> sendDeliveryImageFile({
     required String phone,
     required File imageFile,
@@ -99,7 +88,6 @@ class ApiService {
     final url = Uri.parse(
       'http://116.39.208.72:26443/api/v1/driver/delivery/image',
     );
-
     final request =
         http.MultipartRequest('POST', url)
           ..fields['phone'] = phone
@@ -123,21 +111,20 @@ class ApiService {
     }
   }
 
-  // 근태 상태 변경 API 호출
   static Future<bool> updateAttendanceStatus(String status) async {
     final url = Uri.parse(
       'http://116.39.208.72:26443/api/v1/driver/attendance',
     );
 
     print('📤 근태 상태 요청: $status');
-    print('📤 토큰: ${UserData.token}');
+    print('📤 토큰: ${localUser.UserData.token}'); // ✅ 충돌 방지 alias 사용
 
     try {
       final response = await http.patch(
         url,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${UserData.token}',
+          'Authorization': 'Bearer ${localUser.UserData.token}',
         },
         body: jsonEncode({'status': status}),
       );
