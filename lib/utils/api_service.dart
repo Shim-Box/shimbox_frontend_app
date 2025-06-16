@@ -144,4 +144,77 @@ class ApiService {
       return false;
     }
   }
+
+  // 설문조사
+  static Future<bool> submitHealthSurvey({
+    required String finish1,
+    required String finish2,
+    required String finish3,
+  }) async {
+    final url = Uri.parse(
+      'http://116.39.208.72:26443/api/v1/driver/health/survey',
+    );
+    print('📤 설문 제출 시작');
+    print('📤 토큰: ${localUser.UserData.token}');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${localUser.UserData.token}',
+        },
+        body: jsonEncode({
+          'finish1': finish1,
+          'finish2': finish2,
+          'finish3': finish3,
+        }),
+      );
+
+      print('📥 응답 코드: ${response.statusCode}');
+      print('📥 응답 바디: ${response.body}');
+
+      if (response.statusCode == 200) {
+        print('✅ 설문 제출 성공');
+        return true;
+      } else {
+        print('❌ 설문 제출 실패');
+        return false;
+      }
+    } catch (e) {
+      print('🔥 설문 제출 중 에러 발생: $e');
+      return false;
+    }
+  }
+
+  // 건강 더미 데이터 - 이게 있어야 퇴근후 설문이 됨
+  static Future<bool> createDummyHealthRecord() async {
+    final url = Uri.parse('http://116.39.208.72:26443/api/v1/driver/realtime');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${localUser.UserData.token}',
+        },
+        body: jsonEncode({
+          'step': 1000,
+          'heartRate': 75,
+          'conditionStatus': '좋음',
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('✅ 건강 데이터 생성 성공');
+        return true;
+      } else {
+        print('❌ 건강 데이터 생성 실패: ${response.statusCode}, ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('🔥 건강 데이터 예외 발생: $e');
+      return false;
+    }
+  }
 }

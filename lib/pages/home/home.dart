@@ -1,4 +1,3 @@
-// 추가된 파일 import
 import 'survey_module.dart';
 
 // 기존 import 유지
@@ -27,8 +26,8 @@ class _HomePageState extends State<HomePage> {
 
   final PageController _pageController = PageController();
   int _currentPage = 0;
-
   bool showSurvey = false;
+
   final bottomController = Get.find<BottomNavController>();
 
   @override
@@ -75,7 +74,6 @@ class _HomePageState extends State<HomePage> {
                                   fontSize: 18,
                                 ),
                               ),
-
                               SizedBox(height: 4),
                               Row(
                                 children: [
@@ -144,22 +142,10 @@ class _HomePageState extends State<HomePage> {
                           }
                         } else {
                           if (bottomController.isCheckedIn.value) {
-                            final success =
-                                await ApiService.updateAttendanceStatus("퇴근");
-                            print('🔁 퇴근 요청 결과: $success');
-                            if (success) {
-                              bottomController.isCheckedOut.value = true;
-                              bottomController.checkOutTime.value = time;
-                              setState(() => showSurvey = true);
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('퇴근 상태 변경 실패')),
-                              );
-                            }
+                            setState(() => showSurvey = true);
                           }
                         }
                       },
-
                       child: Container(
                         height: 90,
                         decoration: BoxDecoration(
@@ -403,8 +389,6 @@ class _HomePageState extends State<HomePage> {
                               padding: const EdgeInsets.only(left: 8),
                               child: Icon(Icons.chevron_right, size: 28),
                             ),
-
-                            // home.dart
                             onTap: () {
                               Get.find<BottomNavController>()
                                   .goToDeliveryDetail(area);
@@ -422,18 +406,57 @@ class _HomePageState extends State<HomePage> {
 
         if (showSurvey)
           SurveyModule(
-            onClose: (route) {
-              bottomController.changeBottomNav(0);
-              _pageController.jumpToPage(0);
+            onSubmit: (finish1, finish2, finish3) async {
+              print('📤 설문 제출 시작');
+
+              final dummySuccess = await ApiService.createDummyHealthRecord();
+              if (!dummySuccess) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('건강 데이터 생성 실패')));
+                return;
+              }
+
+              final surveySuccess = await ApiService.submitHealthSurvey(
+                finish1: finish1,
+                finish2: finish2,
+                finish3: finish3,
+              );
+
+              if (!surveySuccess) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('설문 제출 실패')));
+                return;
+              }
+
+              final now = DateTime.now();
+              final time =
+                  '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
+              final offSuccess = await ApiService.updateAttendanceStatus("퇴근");
+              if (!offSuccess) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('퇴근 상태 변경 실패')));
+                return;
+              }
+
+              bottomController.isCheckedOut.value = true;
+              bottomController.checkOutTime.value = time;
 
               setState(() {
                 _currentPage = 0;
                 showSurvey = false;
-
-                // ✅ 여기! GetX 상태 초기화
                 bottomController.isCheckedIn.value = false;
                 bottomController.checkInTime.value = '';
               });
+
+              bottomController.changeBottomNav(0);
+              _pageController.jumpToPage(0);
+            },
+            onClose: (_) {
+              setState(() => showSurvey = false);
             },
           ),
       ],
