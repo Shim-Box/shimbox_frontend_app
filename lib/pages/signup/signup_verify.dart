@@ -111,10 +111,22 @@ class _SignupVerifyPageState extends State<SignupVerifyPage> {
     );
 
     try {
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(
+        credential,
+      );
+
+      // ✅ null 체크 필수!
+      if (userCredential.user == null) {
+        print('❗ Firebase 로그인은 성공했지만 user 정보가 없습니다');
+        showSnack('인증 실패: 사용자 정보가 없습니다.');
+        return;
+      }
+
+      print('✅ 인증 성공 - UID: ${userCredential.user!.uid}');
       setState(() => _isVerified = true);
       showSnack('인증 성공!');
     } catch (e) {
+      print('❗ Firebase 인증 에러: $e');
       showSnack('인증 실패: ${e.toString()}');
     }
   }
