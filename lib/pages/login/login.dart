@@ -39,6 +39,7 @@ class _LoginPageState extends State<LoginPage> {
       UserData.name = userData.name;
       UserData.token = userData.accessToken;
       UserData.email = loginData.email;
+      UserData.residence = userData.residence;
 
       print('✅ 저장된 사용자 이름: ${UserData.name}');
       print('✅ 저장된 토큰: ${UserData.token}');

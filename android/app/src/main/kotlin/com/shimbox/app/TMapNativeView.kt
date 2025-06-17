@@ -21,12 +21,11 @@ class TMapNativeView(context: Context) : PlatformView {
             setMapType(TMapView.MapType.DEFAULT)
 
             setOnMapReadyListener {
-                setTrackingMode(true) // ✅ tracking 켜기
+                setTrackingMode(false) // 🔴 반드시 false로 설정해야 드래그 가능!
                 setCompassMode(true)
 
                 val location: TMapPoint = locationPoint
                 Log.d("TMapDebug", "현재 위치 lat=${location.latitude}, lon=${location.longitude}")
-
                 setCenterPoint(location.longitude, location.latitude)
 
                 try {
@@ -38,12 +37,13 @@ class TMapNativeView(context: Context) : PlatformView {
                 }
             }
 
-            // ✅ SurfaceView 위에 Flutter 위젯 뜨게 설정
+            // 🔽 overlay 설정
             post {
+                Log.d("TMapDebug", "📌 post 블록 진입 - overlay 설정 시도 시작")
                 forceSurfaceViewMediaOverlay(this@apply)
             }
 
-
+            // 🔽 터치 로그용
             setOnTouchListener { _, event ->
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> Log.d("TMapGesture", "사용자 터치 시작")
@@ -55,6 +55,7 @@ class TMapNativeView(context: Context) : PlatformView {
         }
 
         TMapController.tMapView = tMapView
+
     }
 
     override fun getView(): View = tMapView
@@ -72,4 +73,7 @@ class TMapNativeView(context: Context) : PlatformView {
             }
         }
     }
+
+
+
 }

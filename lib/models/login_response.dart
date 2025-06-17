@@ -23,12 +23,14 @@ class UserData {
   final bool approved;
   final String accessToken;
   final String refreshToken;
+  final String residence;
 
   UserData({
     required this.name,
     required this.approved,
     required this.accessToken,
     required this.refreshToken,
+    required this.residence,
   });
 
   factory UserData.fromJson(Map<String, dynamic> json) {
@@ -37,6 +39,7 @@ class UserData {
       approved: json['approved'],
       accessToken: json['accessToken'],
       refreshToken: json['refreshToken'],
+      residence: json['residence'] ?? '',
     );
   }
 }

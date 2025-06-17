@@ -10,6 +10,8 @@ import './alarmScreen.dart';
 import '../delivery/delivery_detail.dart';
 import 'package:shimbox_app/models/test_user_data.dart';
 import 'package:shimbox_app/utils/api_service.dart';
+import 'package:shimbox_app/models/test_user_data.dart';
+import 'package:shimbox_app/models/test_user_data.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -17,18 +19,56 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final List<Map<String, dynamic>> deliveryAreas = [
-    {'name': '고척동', 'total': 20},
-    {'name': '오류동', 'total': 30},
-    {'name': '신도림동', 'total': 100},
-    {'name': '개봉동', 'total': 30},
-  ];
-
+  List<Map<String, dynamic>> deliveryAreas = []; // ✅ API 연동으로 대체됨
+  int totalDeliveries = 0;
+  int completedDeliveries = 0;
   final PageController _pageController = PageController();
   int _currentPage = 0;
   bool showSurvey = false;
 
   final bottomController = Get.find<BottomNavController>();
+
+  @override
+  void initState() {
+    super.initState();
+    fetchDeliverySummary();
+  }
+
+  Future<void> fetchDeliverySummary() async {
+    try {
+      final data = await ApiService.fetchDeliverySummary();
+      int total = 0;
+      int completed = 0;
+
+      final areas =
+          data.map<Map<String, dynamic>>((area) {
+            final int totalCount = (area['totalCount'] ?? 0).toInt();
+            final int completedCount = (area['completedCount'] ?? 0).toInt();
+
+            total += totalCount;
+            completed += completedCount;
+
+            return {
+              'name': area['shippingLocation'],
+              'total': totalCount,
+              'completed': completedCount,
+            };
+          }).toList();
+
+      setState(() {
+        deliveryAreas = areas;
+        totalDeliveries = total;
+        completedDeliveries = completed;
+      });
+    } catch (e) {
+      print('❌ 배송 요약 불러오기 실패: $e');
+    }
+  }
+
+  String getShortName(String fullName) {
+    if (fullName.length <= 2) return fullName;
+    return fullName.substring(fullName.length - 2);
+  }
 
   @override
   void dispose() {
@@ -43,7 +83,7 @@ class _HomePageState extends State<HomePage> {
         Scaffold(
           body: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 31),
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 38),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -85,7 +125,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   SizedBox(width: 5),
                                   Text(
-                                    '서울시, 구로구',
+                                    '${UserData.residence ?? '지역 정보 없음'}', // ← 여기에 적용
                                     style: TextStyle(
                                       color: Colors.grey,
                                       fontSize: 13,
@@ -115,7 +155,7 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
 
-                  SizedBox(height: 20),
+                  SizedBox(height: 35),
 
                   // 출근/퇴근 박스
                   Center(
@@ -167,8 +207,12 @@ class _HomePageState extends State<HomePage> {
                                         setState(() => _currentPage = index),
                                 itemBuilder: (context, index) {
                                   return Obx(() {
+                                    final String displayName = getShortName(
+                                      UserData.name ?? '사용자',
+                                    );
                                     String label = '';
-                                    String message = '길동님, 오늘 하루도 힘차게 시작해 볼까요?';
+                                    String message =
+                                        '$displayName님, 오늘 하루도 힘차게 시작해 볼까요?';
 
                                     if (index == 0) {
                                       label =
@@ -179,7 +223,8 @@ class _HomePageState extends State<HomePage> {
                                       if (bottomController.isCheckedOut.value) {
                                         label =
                                             '퇴근완료 ${bottomController.checkOutTime.value}';
-                                        message = '길동님, 오늘 하루도 고생하셨어요';
+                                        message =
+                                            '$displayName님, 오늘 하루도 고생하셨어요';
                                       } else {
                                         label = '퇴근';
                                       }
@@ -264,7 +309,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
 
-                  SizedBox(height: 24),
+                  SizedBox(height: 50),
 
                   // 오늘의 배송
                   Text(
@@ -293,7 +338,7 @@ class _HomePageState extends State<HomePage> {
                                 text: TextSpan(
                                   children: [
                                     TextSpan(
-                                      text: '0',
+                                      text: '$completedDeliveries',
                                       style: TextStyle(
                                         fontSize: 17,
                                         fontWeight: FontWeight.bold,
@@ -301,7 +346,7 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
                                     TextSpan(
-                                      text: ' / 300 건 완료',
+                                      text: ' / $totalDeliveries 건 완료',
                                       style: TextStyle(
                                         fontSize: 17,
                                         fontWeight: FontWeight.bold,
@@ -322,7 +367,11 @@ class _HomePageState extends State<HomePage> {
                                       color: Colors.grey[300],
                                     ),
                                     FractionallySizedBox(
-                                      widthFactor: 0.2,
+                                      widthFactor:
+                                          totalDeliveries > 0
+                                              ? completedDeliveries /
+                                                  totalDeliveries
+                                              : 0,
                                       child: Container(
                                         height: 6,
                                         color: Color(0xFF61D5AB),
@@ -379,7 +428,7 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                             subtitle: Text(
-                              '0 / ${area['total']}건 미완료',
+                              '${area['completed']} / ${area['total']}건 완료',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey,
