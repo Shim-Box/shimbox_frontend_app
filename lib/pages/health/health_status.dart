@@ -23,25 +23,58 @@ class _HealthPageState extends State<HealthPage> {
   bool _isLoadingStep = false;
   bool _isLoadingHeartRate = false;
   bool _isHealthConnected = false;
+  int _todayDeliveryCount = 0;
 
   final fatigueLevel = 'HIGH';
   final fatigueColor = Color(0xFFFF8A8A);
   final fatigueMessage = '오늘은 좀 피곤하실 것 같네요.\n휴식이 필요해요!';
 
-  final workTime = '8시간';
-  final workTimeSub = '주간 평균 7시간';
   final workChartHeights = [77.0, 78.0, 55.0, 76.0, 71.0];
   final workChartLabels = ['월요일', '화요일', '수요일', '목요일', '금요일'];
 
-  final deliveryCount = '300건';
-  final deliverySub = '평균 대비 +10%';
   final deliveryChartHeights = [65.0, 60.0, 72.0, 55.0, 53.0];
   final deliveryChartLabels = ['월요일', '화요일', '수요일', '목요일', '금요일'];
+
+  String get workTime {
+    if (UserData.workStart != null && UserData.workEnd != null) {
+      final duration = UserData.workEnd!.difference(UserData.workStart!);
+      return '${duration.inHours}시간 ${duration.inMinutes.remainder(60)}분';
+    }
+    return '정보 없음';
+  }
+
+  String get workTimeSub => '주간 평균 ${UserData.weeklyWorkAvgHours ?? 0}시간';
+
+  String get deliveryCount => '$_todayDeliveryCount건';
+
+  String get deliverySub {
+    final today = _todayDeliveryCount;
+    final avg = 0;
+    final diff = today - avg;
+    final sign = diff >= 0 ? '+' : '';
+    return '평균 대비 $sign$diff건';
+  }
 
   @override
   void initState() {
     super.initState();
     _checkHealthConnection();
+    _fetchDeliveryCount();
+  }
+
+  Future<void> _fetchDeliveryCount() async {
+    try {
+      final data = await ApiService.fetchDeliverySummary();
+      int count = 0;
+      for (final area in data) {
+        count += (area['completedCount'] ?? 0) as int;
+      }
+      setState(() {
+        _todayDeliveryCount = count;
+      });
+    } catch (e) {
+      print('❌ 배송 완료 건수 불러오기 실패: $e');
+    }
   }
 
   Future<void> _checkHealthConnection() async {
