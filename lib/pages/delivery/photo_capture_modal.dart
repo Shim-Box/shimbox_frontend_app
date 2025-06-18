@@ -1,21 +1,20 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:get/get.dart';
-import 'package:shimbox_app/controllers/bottom_nav_controller.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../utils/api_service.dart';
-import 'package:shimbox_app/utils/firebase_uploader.dart'; // ✅ FirebaseUploader 클래스
-import 'package:url_launcher/url_launcher.dart'; // ✅ 문자 전송용
+import 'package:shimbox_app/utils/firebase_uploader.dart';
 
 class PhotoCaptureModal extends StatefulWidget {
   final String phoneNumber;
   final Function(File) onSend;
+  final int productId;
 
   const PhotoCaptureModal({
     super.key,
     required this.phoneNumber,
     required this.onSend,
+    required this.productId,
   });
 
   @override
@@ -45,7 +44,6 @@ class _PhotoCaptureModalState extends State<PhotoCaptureModal> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // ✅ 다이얼로그 본문
         Dialog(
           insetPadding: const EdgeInsets.symmetric(
             horizontal: 24,
@@ -75,9 +73,9 @@ class _PhotoCaptureModalState extends State<PhotoCaptureModal> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () {
+                        onTap: () async {
                           if (_image != null) {
-                            widget.onSend(_image!);
+                            widget.onSend(_image!); // ✅ 이 부분만 호출하고 나머지 제거
                             Navigator.of(context, rootNavigator: false).pop();
                           }
                         },
@@ -105,15 +103,11 @@ class _PhotoCaptureModalState extends State<PhotoCaptureModal> {
                     ],
                   ),
         ),
-
-        // ✅ 다시찍기: 다이얼로그 바깥, 사진 상단 오른쪽에 겹치게 (살짝 아래로)
         Positioned(
-          top: 220, // 🔽 기존보다 아래로 조정
+          top: 220,
           right: 36,
           child: GestureDetector(
-            onTap: () async {
-              await _pickImage(); // ✅ 다시 촬영
-            },
+            onTap: () async => await _pickImage(),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
@@ -125,7 +119,7 @@ class _PhotoCaptureModalState extends State<PhotoCaptureModal> {
                   Text(
                     '다시찍기',
                     style: TextStyle(
-                      color: Color.fromARGB(255, 255, 255, 255),
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -134,7 +128,7 @@ class _PhotoCaptureModalState extends State<PhotoCaptureModal> {
                     'assets/images/delivery/re.svg',
                     width: 20,
                     height: 20,
-                    color: Color.fromARGB(255, 255, 255, 255),
+                    color: Colors.white,
                   ),
                 ],
               ),

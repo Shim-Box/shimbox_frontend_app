@@ -18,6 +18,12 @@ android {
     compileSdk = 35
     ndkVersion = "27.0.12077973"
 
+    sourceSets {
+        getByName("main") {
+            jniLibs.srcDirs("libs")
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -29,7 +35,7 @@ android {
 
     defaultConfig {
         applicationId = "com.shimbox.app"
-        minSdk = 23
+        minSdk = 24
         targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -61,13 +67,20 @@ android {
     }
 }
 
+repositories {
+    flatDir {
+        dirs("libs")
+    }
+}
+
 flutter {
     source = "../.."
 }
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
-    implementation ("androidx.fragment:fragment:1.3.6")
+    implementation ("androidx.fragment:fragment:1.6.2")
+
 
     // ✅ Firebase BOM
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
@@ -75,4 +88,13 @@ dependencies {
     // ✅ Firebase modules
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-storage")
+
+    // ✅ TMap SDK AAR 연동
+    implementation(files("libs/tmap-sdk-2.4.aar"))
+    implementation(files("libs/vsm-tmap-sdk-v2-android-1.7.251.aar"))
+    implementation("com.google.android.material:material:1.11.0")
+
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+
 }

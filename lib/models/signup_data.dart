@@ -16,7 +16,7 @@ class SignupData {
   String? bloodPressure;
 
   Map<String, dynamic> toJson() {
-    return {
+    final json = {
       "email": email,
       "password": password,
       "name": name,
@@ -31,6 +31,13 @@ class SignupData {
       "averageDelivery": averageDelivery,
       "bloodPressure": bloodPressure,
     };
+
+    if (career == '초보자') {
+      json.remove('averageWorking');
+      json.remove('averageDelivery');
+    }
+
+    return json;
   }
 
   // fromJson 메서드 추가

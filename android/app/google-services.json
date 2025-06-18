@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "337576916905-5sqbpq34q9vhk914dgueu02pf3aegdrr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.shimbox.app",
+            "certificate_hash": "1a75dec7d97905329aae07ee190d4028157668ef"
+          }
+        },
+        {
           "client_id": "337576916905-6aj7p3ti9cannc1osldru8gbg0mit2r5.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -27,6 +35,14 @@
           "android_info": {
             "package_name": "com.shimbox.app",
             "certificate_hash": "251979510cad3b0a79d971835ca47dc836d5f269"
+          }
+        },
+        {
+          "client_id": "337576916905-release-key-added-manually",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.shimbox.app",
+            "certificate_hash": "5e62637424019550c08529f76bde80b6f7f8fd3900989c6a3bc1a6cc2e7f1862"
           }
         }
       ],

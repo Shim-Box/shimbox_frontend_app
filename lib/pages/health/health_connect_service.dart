@@ -41,14 +41,6 @@ class HealthConnectService {
     await prefs.setBool('health_connected', false);
   }
 
-  static Future<String> getStepCount() async {
-    final steps = await getStepCountBetween(
-      DateTime.now().subtract(const Duration(hours: 24)),
-      DateTime.now(),
-    );
-    return steps.toString();
-  }
-
   static Future<int> getStepCountBetween(DateTime start, DateTime end) async {
     final account = await _ensureSignedIn();
     if (account == null) throw Exception('Google 로그인 실패');
@@ -165,7 +157,7 @@ class HealthConnectService {
                 double heartRate =
                     (rawValue is int)
                         ? rawValue.toDouble()
-                        : (rawValue as double);
+                        : rawValue as double;
                 total += heartRate;
                 count++;
               }

@@ -1,24 +1,25 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/signup_data.dart';
 import '../models/login_data.dart';
-import '../models/test_user_data.dart';
+import '../models/login_response.dart';
+import '../models/test_user_data.dart' as localUser;
 
 class ApiService {
-  // ✅ 외부에서 쓸 수 있는 POST 메서드 (내부 _post 호출)
+  static const String baseUrl = 'http://116.39.208.72:26443';
+
   static Future<bool> post(String endpoint, Map<String, dynamic> body) {
     return _post(endpoint, body);
   }
 
-  // 사용자 회원가입
   static Future<bool> registerUser(SignupData data) {
     return _post('/api/v1/auth/save', data.toJson());
   }
 
-  // 로그인
-  static Future<Map<String, dynamic>?> loginUser(LoginData data) async {
-    final url = Uri.parse('http://116.39.208.72:26443/api/v1/auth/login');
+  static Future<LoginResponse?> loginUser(LoginData data) async {
+    final url = Uri.parse('$baseUrl/api/v1/auth/login');
 
     final response = await http.post(
       url,
@@ -27,24 +28,25 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(
-        utf8.decode(response.bodyBytes),
-      ); // ✅ UTF-8 decode
-      // final decoded = jsonDecode(response.body);
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
       print('✅ 로그인 응답: $decoded');
-      return decoded;
+
+      final loginResponse = LoginResponse.fromJson(decoded);
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', loginResponse.data.accessToken ?? '');
+
+      localUser.UserData.token = loginResponse.data.accessToken;
+
+      return loginResponse;
     } else {
       print('❌ 로그인 실패: ${response.statusCode}, ${response.body}');
       return null;
     }
   }
 
-  // ✅ 운전면허 이미지 업로드
   static Future<String?> uploadLicenseImage(File file) async {
-    final url = Uri.parse(
-      'http://116.39.208.72:26443/api/v1/upload/license',
-    ); // 서버가 받아주는 업로드 API
-
+    final url = Uri.parse('$baseUrl/api/v1/upload/license');
     final request = http.MultipartRequest('POST', url);
     request.files.add(await http.MultipartFile.fromPath('file', file.path));
 
@@ -55,7 +57,7 @@ class ApiService {
         final body = await response.stream.bytesToString();
         final result = jsonDecode(body);
         print('✅ 이미지 업로드 성공: ${result['url']}');
-        return result['url']; // 서버가 업로드된 파일 URL을 반환한다고 가정
+        return result['url'];
       } else {
         print('❌ 이미지 업로드 실패: ${response.statusCode}');
         return null;
@@ -66,9 +68,7 @@ class ApiService {
     }
   }
 
-  // 공통 POST 요청 처리
   static Future<bool> _post(String endpoint, Map<String, dynamic> body) async {
-    final baseUrl = 'http://116.39.208.72:26443';
     final url = Uri.parse('$baseUrl$endpoint');
 
     try {
@@ -91,53 +91,45 @@ class ApiService {
     }
   }
 
-  // ✅ 배송 사진 파일 전송 (서버가 문자 전송 포함)
-  static Future<bool> sendDeliveryImageFile({
-    required String phone,
-    required File imageFile,
+  static Future<bool> sendDeliveryImage({
+    required int productId,
+    required String imageUrl,
   }) async {
-    final url = Uri.parse(
-      'http://116.39.208.72:26443/api/v1/driver/delivery/image',
-    );
+    final url = Uri.parse('$baseUrl/api/v1/driver/delivery/image');
 
-    final request =
-        http.MultipartRequest('POST', url)
-          ..fields['phone'] = phone
-          ..files.add(
-            await http.MultipartFile.fromPath('file', imageFile.path),
-          );
+    print('📤 이미지 전송 요청: productId=$productId, imageUrl=$imageUrl');
 
     try {
-      final response = await request.send();
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${localUser.UserData.token}',
+        },
+        body: jsonEncode({'productId': productId, 'imageUrl': imageUrl}),
+      );
 
-      if (response.statusCode == 200) {
-        print('✅ 배송 이미지 전송 성공');
-        return true;
-      } else {
-        print('❌ 배송 이미지 전송 실패: ${response.statusCode}');
-        return false;
-      }
+      print('📥 서버 응답: ${response.statusCode}, ${response.body}');
+
+      return response.statusCode == 200;
     } catch (e) {
-      print('🔥 배송 이미지 전송 예외: $e');
+      print('❌ 이미지 전송 실패: $e');
       return false;
     }
   }
 
-  // 근태 상태 변경 API 호출
   static Future<bool> updateAttendanceStatus(String status) async {
-    final url = Uri.parse(
-      'http://116.39.208.72:26443/api/v1/driver/attendance',
-    );
+    final url = Uri.parse('$baseUrl/api/v1/driver/attendance');
 
     print('📤 근태 상태 요청: $status');
-    print('📤 토큰: ${UserData.token}');
+    print('📤 토큰: ${localUser.UserData.token}');
 
     try {
       final response = await http.patch(
         url,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${UserData.token}',
+          'Authorization': 'Bearer ${localUser.UserData.token}',
         },
         body: jsonEncode({'status': status}),
       );
@@ -155,6 +147,151 @@ class ApiService {
     } catch (e) {
       print('🔥 근태 상태 업데이트 예외 발생: $e');
       return false;
+    }
+  }
+
+  /// ✅ 수정된 통합 버전: 설문 + 건강 데이터 동시 전송
+  static Future<bool> submitHealthSurvey({
+    required String finish1,
+    required String finish2,
+    required String finish3,
+    required int step,
+    required int heartRate,
+    required String conditionStatus,
+  }) async {
+    final url = Uri.parse('$baseUrl/api/v1/driver/health/survey');
+    print('📤 설문 + 건강 데이터 제출 시작');
+    print('📤 토큰: ${localUser.UserData.token}');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${localUser.UserData.token}',
+        },
+        body: jsonEncode({
+          'finish1': finish1,
+          'finish2': finish2,
+          'finish3': finish3,
+          'step': step,
+          'heartRate': heartRate,
+          'conditionStatus': conditionStatus,
+        }),
+      );
+
+      print('📥 응답 코드: ${response.statusCode}');
+      print('📥 응답 바디: ${response.body}');
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('🔥 설문 제출 중 에러 발생: $e');
+      return false;
+    }
+  }
+
+  static Future<List<dynamic>> fetchDeliverySummary() async {
+    final response = await get('/api/v1/driver/summary');
+    if (response['statusCode'] == 200) {
+      return response['data'];
+    } else {
+      throw Exception(response['message'] ?? '배송 정보를 불러올 수 없습니다.');
+    }
+  }
+
+  static Future<bool> updateProductStatus(int productId, String status) async {
+    final body = {"productId": productId, "status": status};
+    final response = await patch('/api/v1/driver/product/status', body);
+
+    final isSuccess =
+        response['statusCode'] == 0 || response['statusCode'] == 200;
+    if (!isSuccess) {
+      print('❌ 배송 상태 변경 실패: ${response['statusCode']}, ${response['message']}');
+    }
+    return isSuccess;
+  }
+
+  static Future<bool> createDummyHealthRecord() async {
+    return sendHealthData(
+      step: localUser.UserData.stepCount ?? 0,
+      heartRate: localUser.UserData.heartRate ?? 0,
+      conditionStatus: localUser.UserData.conditionStatus,
+    );
+  }
+
+  static Future<bool> sendHealthData({
+    required int step,
+    required int heartRate,
+    required String conditionStatus,
+  }) async {
+    final url = Uri.parse('$baseUrl/api/v1/driver/realtime');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${localUser.UserData.token}',
+        },
+        body: jsonEncode({
+          'step': step,
+          'heartRate': heartRate,
+          'conditionStatus': conditionStatus,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('✅ 건강 데이터 전송 성공');
+        return true;
+      } else {
+        print('❌ 건강 데이터 전송 실패: ${response.statusCode}, ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('🔥 건강 데이터 전송 예외 발생: $e');
+      return false;
+    }
+  }
+
+  static Future<Map<String, dynamic>> get(String endpoint) async {
+    final url = Uri.parse('$baseUrl$endpoint');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${localUser.UserData.token}',
+        },
+      );
+
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    } catch (e) {
+      print('🔥 GET 요청 실패 [$endpoint]: $e');
+      rethrow;
+    }
+  }
+
+  static Future<Map<String, dynamic>> patch(
+    String endpoint,
+    Map<String, dynamic> body,
+  ) async {
+    final url = Uri.parse('$baseUrl$endpoint');
+
+    try {
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${localUser.UserData.token}',
+        },
+        body: jsonEncode(body),
+      );
+
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    } catch (e) {
+      print('🔥 PATCH 요청 실패 [$endpoint]: $e');
+      rethrow;
     }
   }
 }
