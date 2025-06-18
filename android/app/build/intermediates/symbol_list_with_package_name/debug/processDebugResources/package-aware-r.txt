@@ -607,6 +607,7 @@ attr font
 attr fontFamily
 attr fontProviderAuthority
 attr fontProviderCerts
+attr fontProviderFallbackQuery
 attr fontProviderFetchStrategy
 attr fontProviderFetchTimeout
 attr fontProviderPackage
@@ -3228,6 +3229,9 @@ drawable ic_mtrl_checked_circle
 drawable ic_mtrl_chip_checked_black
 drawable ic_mtrl_chip_checked_circle
 drawable ic_mtrl_chip_close_circle
+drawable ic_other_sign_in
+drawable ic_passkey
+drawable ic_password
 drawable ic_re
 drawable ic_search_black_24
 drawable info_box
@@ -3889,11 +3893,13 @@ id tag_accessibility_actions
 id tag_accessibility_clickable_spans
 id tag_accessibility_heading
 id tag_accessibility_pane_title
+id tag_compat_insets_dispatch
 id tag_on_apply_window_listener
 id tag_on_receive_content_listener
 id tag_on_receive_content_mime_types
 id tag_screen_reader_focusable
 id tag_state_description
+id tag_system_bar_state_monitor
 id tag_transition_group
 id tag_unhandled_key_event_manager
 id tag_unhandled_key_listeners
@@ -3939,6 +3945,7 @@ id unlabeled
 id up
 id useLogo
 id view_offset_helper
+id view_tree_disjoint_parent
 id view_tree_lifecycle_owner
 id view_tree_on_back_pressed_dispatcher_owner
 id view_tree_saved_state_registry_owner
@@ -4245,6 +4252,8 @@ string action_go_back
 string action_go_forward
 string action_reload
 string action_share
+string android_credentials_TYPE_PASSWORD_CREDENTIAL
+string androidx_credentials_TYPE_PUBLIC_KEY_CREDENTIAL
 string androidx_startup
 string app_name
 string appbar_scrolling_view_behavior
@@ -5092,6 +5101,7 @@ style Theme_Design_Light
 style Theme_Design_Light_BottomSheetDialog
 style Theme_Design_Light_NoActionBar
 style Theme_Design_NoActionBar
+style Theme_Hidden
 style Theme_Material3_Dark
 style Theme_Material3_Dark_BottomSheetDialog
 style Theme_Material3_Dark_Dialog
@@ -5166,6 +5176,7 @@ style Theme_MaterialComponents_Light_NoActionBar
 style Theme_MaterialComponents_Light_NoActionBar_Bridge
 style Theme_MaterialComponents_NoActionBar
 style Theme_MaterialComponents_NoActionBar_Bridge
+style Theme_PlayCore_Transparent
 style Theme_TMapLib
 style ThemeOverlay_AppCompat
 style ThemeOverlay_AppCompat_ActionBar
@@ -5724,7 +5735,7 @@ styleable ExtendedFloatingActionButton_Behavior_Layout behavior_autoHide behavio
 styleable FloatingActionButton android_enabled backgroundTint backgroundTintMode borderWidth elevation ensureMinTouchTargetSize fabCustomSize fabSize hideMotionSpec hoveredFocusedTranslationZ maxImageSize pressedTranslationZ rippleColor shapeAppearance shapeAppearanceOverlay showMotionSpec useCompatPadding
 styleable FloatingActionButton_Behavior_Layout behavior_autoHide
 styleable FlowLayout itemSpacing lineSpacing
-styleable FontFamily fontProviderAuthority fontProviderCerts fontProviderFetchStrategy fontProviderFetchTimeout fontProviderPackage fontProviderQuery fontProviderSystemFontFamily
+styleable FontFamily fontProviderAuthority fontProviderCerts fontProviderFallbackQuery fontProviderFetchStrategy fontProviderFetchTimeout fontProviderPackage fontProviderQuery fontProviderSystemFontFamily
 styleable FontFamilyFont android_font android_fontWeight android_fontStyle android_ttcIndex android_fontVariationSettings font fontStyle fontVariationSettings fontWeight ttcIndex
 styleable ForegroundLinearLayout android_foreground android_foregroundGravity foregroundInsidePadding
 styleable Fragment android_name android_id android_tag
@@ -5841,7 +5852,6 @@ styleable ViewPager2 android_orientation
 styleable ViewStubCompat android_id android_layout android_inflatedId
 styleable leak_canary_MoreDetailsView leak_canary_plus_color
 xml flutter_image_picker_file_paths
-xml ga_ad_services_config
 xml image_share_filepaths
 xml leak_canary_file_paths
 xml network_security_config
