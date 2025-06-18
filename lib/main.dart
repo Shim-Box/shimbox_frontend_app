@@ -31,6 +31,7 @@ import 'pages/home/home.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:shimbox_app/models/test_user_data.dart' as localUser;
+import 'pages/map/route_test.dart'; // 파일 경로에 맞게!
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // 한 번만 호출!
@@ -50,7 +51,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       initialBinding: InitBindings(),
-      initialRoute: '/splash',
+      initialRoute: '/route_test',
       getPages: [
         GetPage(name: '/splash', page: () => SplashPage()),
         GetPage(name: '/start', page: () => StartPage()),
@@ -67,6 +68,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/wearable', page: () => WearablePage()),
         // GetPage(name: '/main', page: () => HomePage()),
         GetPage(name: '/main', page: () => MainScaffold()),
+        GetPage(name: '/route_test', page: () => RouteTestPage()),
       ],
     );
   }

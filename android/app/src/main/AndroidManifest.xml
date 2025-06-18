@@ -60,6 +60,10 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDcaQDrzTPJQ1bT2feHqyyo-LA_ijEXHCs" />
+
         <!-- Naver Map Client ID -->
         <meta-data
             android:name="com.naver.maps.map.CLIENT_ID"
