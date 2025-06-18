@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimbox_app/pages/health/health_connect_service.dart';
 import 'package:shimbox_app/pages/wearable/wearable.dart';
+import 'package:shimbox_app/utils/api_service.dart';
+import 'package:shimbox_app/models/test_user_data.dart';
 
 class HealthPage extends StatefulWidget {
   const HealthPage({super.key});
@@ -14,14 +16,16 @@ class HealthPage extends StatefulWidget {
 
 class _HealthPageState extends State<HealthPage> {
   String _stepCount = '연동 필요';
+  int _stepCountValue = 0;
   int? _weeklyAverage;
   String _heartRate = '연동 필요';
+  int _heartRateValue = 0;
   bool _isLoadingStep = false;
   bool _isLoadingHeartRate = false;
   bool _isHealthConnected = false;
 
   final fatigueLevel = 'HIGH';
-  final fatigueColor = const Color(0xFFFF8A8A);
+  final fatigueColor = Color(0xFFFF8A8A);
   final fatigueMessage = '오늘은 좀 피곤하실 것 같네요.\n휴식이 필요해요!';
 
   final workTime = '8시간';
@@ -47,13 +51,25 @@ class _HealthPageState extends State<HealthPage> {
       _isHealthConnected = isConnected;
     });
     if (isConnected) {
-      _fetchStepCount();
-      _fetchHeartRate();
+      await _fetchStepCount();
+      await _fetchHeartRate();
+      await _sendHealthToServer();
     } else {
       setState(() {
         _stepCount = '연동 필요';
         _heartRate = '연동 필요';
       });
+    }
+  }
+
+  Future<void> _sendHealthToServer() async {
+    if (_stepCountValue > 0 && _heartRateValue > 0) {
+      UserData.conditionStatus = '좋음';
+      await ApiService.sendHealthData(
+        step: _stepCountValue,
+        heartRate: _heartRateValue,
+        conditionStatus: UserData.conditionStatus,
+      );
     }
   }
 
@@ -112,8 +128,9 @@ class _HealthPageState extends State<HealthPage> {
         _stepCount = '...';
         _heartRate = '...';
       });
-      _fetchStepCount();
-      _fetchHeartRate();
+      await _fetchStepCount();
+      await _fetchHeartRate();
+      await _sendHealthToServer();
     } else {
       ScaffoldMessenger.of(
         context,
@@ -138,8 +155,10 @@ class _HealthPageState extends State<HealthPage> {
       final today = steps.isNotEmpty ? steps.last : 0;
 
       setState(() {
+        _stepCountValue = today;
         _stepCount = today.toString();
         _weeklyAverage = average;
+        UserData.stepCount = today;
       });
     } catch (e) {
       ScaffoldMessenger.of(
@@ -161,21 +180,19 @@ class _HealthPageState extends State<HealthPage> {
     });
 
     try {
-      final heartRate = await HealthConnectService.getTodayHeartRateAvg();
+      final avgHeartRate = await HealthConnectService.getTodayHeartRateAvg();
       setState(() {
-        _heartRate = heartRate > 0 ? '$heartRate bpm' : '0';
+        _heartRateValue = avgHeartRate;
+        _heartRate = avgHeartRate > 0 ? '$avgHeartRate bpm' : '데이터 없음';
+        UserData.heartRate = avgHeartRate;
       });
-    } catch (e, stack) {
-      print('심박수 가져오기 오류: $e');
-      print('스택트레이스:\n$stack');
-
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('심박수 데이터를 불러오는 데 실패했어요.\nGoogle Fit 연동을 확인해주세요.'),
           duration: Duration(seconds: 4),
         ),
       );
-
       setState(() {
         _heartRate = '오류';
       });
@@ -217,9 +234,9 @@ class _HealthPageState extends State<HealthPage> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          '홍길동님의 건강 리포트',
-                          style: TextStyle(
+                        Text(
+                          '${UserData.name ?? '사용자'}님의 건강 리포트',
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
@@ -328,7 +345,7 @@ class _HealthPageState extends State<HealthPage> {
                             _isHealthConnected
                                 ? (_heartRate == '데이터 없음' || _heartRate == '오류'
                                     ? '데이터 없음'
-                                    : '오늘 평균')
+                                    : '최신 심박수')
                                 : '연동 필요',
                         subColor:
                             _isHealthConnected ? null : const Color(0xFF61D5AB),
@@ -465,7 +482,7 @@ class _HealthPageState extends State<HealthPage> {
                     style: const TextStyle(
                       fontSize: 35,
                       fontWeight: FontWeight.bold,
-                      height: -3,
+                      height: 1,
                     ),
                   ),
                   const SizedBox(height: 15),
@@ -478,7 +495,7 @@ class _HealthPageState extends State<HealthPage> {
                               style: TextStyle(
                                 fontSize: 17,
                                 color: Color(0xFF7B7B7B),
-                                height: -3,
+                                height: 1,
                               ),
                             ),
                             TextSpan(
@@ -486,7 +503,7 @@ class _HealthPageState extends State<HealthPage> {
                               style: TextStyle(
                                 fontSize: 17,
                                 color: subtitleColor ?? Colors.grey,
-                                height: -3,
+                                height: 1,
                               ),
                             ),
                           ],
@@ -497,7 +514,7 @@ class _HealthPageState extends State<HealthPage> {
                         style: TextStyle(
                           fontSize: 17,
                           color: subtitleColor ?? Colors.grey,
-                          height: -3,
+                          height: 1,
                         ),
                       ),
                 ],

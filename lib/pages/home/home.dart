@@ -470,6 +470,9 @@ class _HomePageState extends State<HomePage> {
                 finish1: finish1,
                 finish2: finish2,
                 finish3: finish3,
+                step: UserData.stepCount ?? 0,
+                heartRate: UserData.heartRate ?? 0,
+                conditionStatus: UserData.conditionStatus ?? '미정',
               );
 
               if (!surveySuccess) {
