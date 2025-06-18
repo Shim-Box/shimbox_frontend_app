@@ -256,10 +256,10 @@ class _DeliveryDetailPageState extends State<DeliveryDetailPage> {
               ],
             ),
             SizedBox(height: 8),
-            Text(
-              '예상 도착 시간: ${product['estimatedArrivalTime']}',
-              style: TextStyle(color: textColor, fontSize: 14),
-            ),
+            // Text(
+            // '예상 도착 시간: ${product['estimatedArrivalTime']}',
+            // style: TextStyle(color: textColor, fontSize: 14),
+            // ),
             SizedBox(height: 16),
             _buildStatusButton(areaIndex, i, status, product),
             SizedBox(height: 24),

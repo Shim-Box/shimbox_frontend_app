@@ -16,20 +16,28 @@ class MapPage extends StatefulWidget {
 
 class _MapPageState extends State<MapPage> {
   GoogleMapController? mapController;
+  final Completer<GoogleMapController> _controllerCompleter = Completer();
   LatLng? currentLocation;
 
   StreamSubscription<Position>? _positionSubscription;
   StreamSubscription<CompassEvent>? _compassSubscription;
 
   final List<LatLng> waypoints = [
-    LatLng(37.5083, 126.8665),
-    LatLng(37.5102, 126.8702),
-    LatLng(37.5130, 126.8732),
+    LatLng(37.5083, 126.8665), // 경유지 1
+    LatLng(37.5102, 126.8702), // 경유지 2
+    LatLng(37.5130, 126.8732), // 경유지 3
+
+    LatLng(37.5180, 126.8825), // 도착지 (맨 마지막)
   ];
 
   Set<Marker> markers = {};
   Set<Polyline> polylines = {};
   final String kakaoApiKey = '4faee1ecf5810b0685963cbb90ed9d48';
+
+  bool _isUserInteracting = false;
+  Timer? _interactionTimer;
+  double? _lastBearing;
+  Timer? _bearingUpdateTimer;
 
   @override
   void initState() {
@@ -41,6 +49,8 @@ class _MapPageState extends State<MapPage> {
   void dispose() {
     _positionSubscription?.cancel();
     _compassSubscription?.cancel();
+    _interactionTimer?.cancel();
+    _bearingUpdateTimer?.cancel();
     super.dispose();
   }
 
@@ -48,10 +58,8 @@ class _MapPageState extends State<MapPage> {
     try {
       final loc = await _fetchCurrentLocation();
       if (!mounted) return;
-
       currentLocation = loc;
       _setMarkers(loc);
-      await _drawRouteFrom(loc);
       mapController?.animateCamera(CameraUpdate.newLatLngZoom(loc, 17));
     } catch (e) {
       print('❌ 초기화 실패: $e');
@@ -84,55 +92,72 @@ class _MapPageState extends State<MapPage> {
     ).listen((position) {
       final loc = LatLng(position.latitude, position.longitude);
       if (!mounted) return;
-
       setState(() {
         currentLocation = loc;
         _setMarkers(loc);
       });
-
-      mapController?.animateCamera(CameraUpdate.newLatLng(loc));
+      if (!_isUserInteracting) {
+        mapController?.animateCamera(CameraUpdate.newLatLng(loc));
+      }
     });
 
-    _compassSubscription = FlutterCompass.events?.listen((event) {
+    _compassSubscription = FlutterCompass.events?.listen((event) async {
       final heading = event.heading;
       if (heading == null || currentLocation == null || mapController == null)
         return;
+      if (_isUserInteracting || !mounted) return;
 
-      mapController!.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: currentLocation!, zoom: 17, bearing: heading),
-        ),
-      );
+      if (_lastBearing != null && (heading - _lastBearing!).abs() < 3) return;
+      _lastBearing = heading;
+
+      if (_bearingUpdateTimer?.isActive ?? false) return;
+      _bearingUpdateTimer = Timer(const Duration(milliseconds: 300), () async {
+        if (!mounted) return;
+        final zoom = await mapController!.getZoomLevel();
+        if (!mounted) return;
+        mapController!.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: currentLocation!,
+              zoom: zoom,
+              bearing: heading,
+              tilt: 0,
+            ),
+          ),
+        );
+      });
     });
   }
 
   void _setMarkers(LatLng start) {
-    markers.clear();
-    markers.add(
-      Marker(
-        markerId: const MarkerId('start'),
-        position: start,
-        infoWindow: const InfoWindow(title: '현재 위치'),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-      ),
-    );
-
-    for (int i = 0; i < waypoints.length; i++) {
+    setState(() {
+      markers.clear();
       markers.add(
         Marker(
-          markerId: MarkerId('waypoint$i'),
-          position: waypoints[i],
-          infoWindow: InfoWindow(
-            title: i == waypoints.length - 1 ? '도착지' : '경유지 ${i + 1}',
-          ),
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            i == waypoints.length - 1
-                ? BitmapDescriptor.hueGreen
-                : BitmapDescriptor.hueRed,
-          ),
+          markerId: const MarkerId('start'),
+          position: start,
+          infoWindow: const InfoWindow(title: '현재 위치'),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
         ),
       );
-    }
+
+      for (int i = 0; i < waypoints.length; i++) {
+        markers.add(
+          Marker(
+            markerId: MarkerId('waypoint$i'),
+            position: waypoints[i],
+            infoWindow: InfoWindow(
+              title: i == waypoints.length - 1 ? '도착지' : '경유지 ${i + 1}',
+            ),
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+              i == waypoints.length - 1
+                  ? BitmapDescriptor.hueGreen
+                  : BitmapDescriptor.hueRed,
+            ),
+          ),
+        );
+      }
+    });
   }
 
   List<LatLng> _greedyRoute(LatLng start, List<LatLng> mids) {
@@ -167,6 +192,8 @@ class _MapPageState extends State<MapPage> {
   Future<void> _drawRouteFrom(LatLng start) async {
     final end = waypoints.last;
     final mids = waypoints.sublist(0, waypoints.length - 1);
+
+    /// ✅ 가까운 순서로 경유지 재정렬 적용
     final best = _greedyRoute(start, mids);
 
     final origin = '${start.longitude},${start.latitude}';
@@ -239,18 +266,55 @@ class _MapPageState extends State<MapPage> {
             polylines: polylines,
             onMapCreated: (controller) {
               mapController = controller;
+              _controllerCompleter.complete(controller);
               if (currentLocation != null) {
                 mapController!.animateCamera(
                   CameraUpdate.newLatLngZoom(currentLocation!, 17),
                 );
               }
             },
+            onCameraMoveStarted: () {
+              _isUserInteracting = true;
+              _interactionTimer?.cancel();
+            },
           ),
           MapActionHeader(
             onCurrentLocationPressed: () async {
-              final loc = await _fetchCurrentLocation();
-              if (!mounted) return;
-              mapController?.animateCamera(CameraUpdate.newLatLngZoom(loc, 17));
+              print('📍 위치 버튼 클릭됨');
+              try {
+                final controller = await _controllerCompleter.future;
+
+                Position? last = await Geolocator.getLastKnownPosition();
+                LatLng loc;
+                if (last != null) {
+                  loc = LatLng(last.latitude, last.longitude);
+                } else {
+                  loc = await _fetchCurrentLocation();
+                }
+
+                if (!mounted) return;
+
+                final zoom = await controller.getZoomLevel();
+                controller.animateCamera(
+                  CameraUpdate.newCameraPosition(
+                    CameraPosition(
+                      target: loc,
+                      zoom: zoom,
+                      bearing: 0,
+                      tilt: 0,
+                    ),
+                  ),
+                );
+
+                setState(() => currentLocation = loc);
+              } catch (e) {
+                print('❌ 위치 이동 실패: $e');
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('위치를 가져올 수 없습니다. 권한을 확인하세요.')),
+                  );
+                }
+              }
             },
             onDrawRoutePressed: () {
               if (currentLocation != null) {
